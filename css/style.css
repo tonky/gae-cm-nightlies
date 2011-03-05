@@ -1,0 +1,10 @@
+#body { font-family: arial; background-color: #333; font-size: 18px; color: #888; padding: 15px; }
+span { margin: 2px; float: left; width: 100%; }
+
+.translation { color: #555; }
+.translation a:link {color: #555}
+
+h4 { font-size: 1.5em; padding: 45px 5px 5px 5px; color: #EEE; clear: both; }
+
+a:link {color: #AAA}
+a:visited {color: #AAA; }
