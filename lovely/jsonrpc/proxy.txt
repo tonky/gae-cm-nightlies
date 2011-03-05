@@ -1,0 +1,147 @@
+=====================
+JSON-RPC Client Proxy
+=====================
+
+    >>> from lovely.jsonrpc import proxy
+
+This is a client side proxy that behaves like a local object but
+executes methods on remote jsonrpc services. By default python's
+httplib is used on the transport layer.
+
+We use a testing server to demonstrate this.
+
+    >>> from lovely.jsonrpc import testing
+    >>> server = testing.get_server()
+
+    >>> client = proxy.ServerProxy('http://localhost:12345')
+
+
+The testserver has an echo method that returns all args and
+kwargs. But we have to tell the server that it should handle a
+request. Additionally the request headers are also printed.
+
+    >>> testing.one_request(server)
+    >>> res = client.echo()
+    HTTP_ACCEPT application/json
+    HTTP_ACCEPT_ENCODING identity
+    HTTP_HOST localhost:12345
+    HTTP_USER_AGENT lovey.jsonpc.proxy (httplib)
+    >>> res
+    [[], {}]
+
+    >>> testing.one_request(server)
+    >>> res = client.echo(1)
+    HTTP_ACCEPT application/json
+    HTTP_ACCEPT_ENCODING identity
+    HTTP_HOST localhost:12345
+    HTTP_USER_AGENT lovey.jsonpc.proxy (httplib)
+    >>> res
+    [[1], {}]
+
+    >>> testing.one_request(server)
+    >>> res = client.echo(u'one', x=1, y={'first': 123})
+    HTTP_ACCEPT application/json
+    HTTP_ACCEPT_ENCODING identity
+    HTTP_HOST localhost:12345
+    HTTP_USER_AGENT lovey.jsonpc.proxy (httplib)
+
+    >>> res
+    [['one'], {'y': {'first': 123}, 'x': 1}]
+
+Session handling
+================
+
+In order to authenticate the rpc request a special session object is
+used. For basic authentication we can set credentials when
+constructing the session object.
+
+
+    >>> session = proxy.Session(username='mgr', password='pw')
+    >>> client = proxy.ServerProxy('http://localhost:12345', session=session)
+    >>> testing.one_request(server)
+
+Now we have basic auth headers.
+
+    >>> res = client.echo(1)
+    HTTP_ACCEPT application/json
+    HTTP_ACCEPT_ENCODING identity
+    HTTP_AUTHORIZATION Basic bWdyOnB3
+    HTTP_COOKIE
+    HTTP_HOST localhost:12345
+    HTTP_USER_AGENT lovey.jsonpc.proxy (httplib)
+
+    >>> res
+    [[1], {}]
+
+If a cookie was sent (which is done by our testing ap) it is sent with
+the next request.
+
+    >>> testing.one_request(server)
+    >>> res = client.echo(1)
+    HTTP_ACCEPT application/json
+    HTTP_ACCEPT_ENCODING identity
+    HTTP_AUTHORIZATION Basic bWdyOnB3
+    HTTP_COOKIE x=1
+    HTTP_HOST localhost:12345
+    HTTP_USER_AGENT lovey.jsonpc.proxy (httplib)
+
+    >>> res
+    [[1], {}]
+
+
+Compatibility-Mode
+==================
+
+For compatibilty to JSONRPC v1.0 we have to pass the id to the request::
+
+    >>> testing.one_request(server)
+    >>> c = proxy.ServerProxy('http://localhost:12345', send_id=True)
+    >>> res = c.echo()
+    HTTP_ACCEPT application/json
+    HTTP_ACCEPT_ENCODING identity
+    HTTP_HOST localhost:12345
+    HTTP_USER_AGENT lovey.jsonpc.proxy (httplib)
+
+
+Timeout
+=======
+
+Setting a request timeout on a proxy requires eighter python2.6 or GAE python.
+For testing purpose we fake the exception in case our python does not support
+http timeout::
+
+    >>> import sys
+    >>> version = int("%i%i"%sys.version_info[0:2])
+    >>> if version >= 26:
+    ...     c = proxy.ServerProxy('http://localhost:12345', timeout=2)
+    ...     res = c.echo()
+    ... else:
+    ...     # used python doesn't support httplib timeout
+    ...     from socket import timeout
+    ...     raise timeout('timed out')
+    Traceback (most recent call last):
+    timeout: timed out
+
+
+JSON Implementation
+===================
+
+It is possible to use a specific json implementation for the
+proxy. The default implementation is the json module of Python2.6 and
+on lower python versions simplejson gets used.
+
+If the json implementation is None an exception gets raised.
+
+    >>> client = proxy.ServerProxy('http://localhost:12345',
+    ...                            json_impl=None)
+    Traceback (most recent call last):
+    ...
+    JSONImplementationNotFound: Unable to find any json implementation you need either Python 2.6+ or simplejson installed
+
+For example if you prefer simplejson over pythons built in
+implementation you can override it.
+
+    >>> import simplejson
+    >>> client = proxy.ServerProxy('http://localhost:12345',
+    ...                            json_impl=simplejson)
+

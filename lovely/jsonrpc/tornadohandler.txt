@@ -1,0 +1,143 @@
+================================
+Tornado JSON-RPC Request Handler
+================================
+
+In order to provide a json-rpc entrypoint in tornado a dispatcher is
+needed.
+
+    >>> from lovely.jsonrpc import dispatcher
+    >>> demo = dispatcher.JSONRPCDispatcher()
+
+Let us register a simple method on demo1.
+
+    >>> def echo(s):
+    ...     return s
+
+    >>> demo.register_method(echo, 'echo')
+
+Now we create a tornado application. Note that we use the wsgi app of
+tornado for testing, but the initial intent to use this handler is to
+also allow async operations, which do not work in wsgi.
+
+    >>> from tornado.wsgi import WSGIApplication
+    >>> from lovely.jsonrpc.tornadohandler import JSONRPCRequestHandler
+    >>> import tornado.web
+    >>> import tornado.httpserver
+    >>> app = tornado.web.Application([
+    ...     (r"/demo", JSONRPCRequestHandler, dict(dispatcher=demo),)
+    ...     ])
+    >>> http_server = tornado.httpserver.HTTPServer(app)
+    >>> import threading
+    >>> def run_server():
+    ...     http_server.listen(11080)
+    ...     tornado.ioloop.IOLoop.instance().start()
+    >>> t = threading.Thread(target=run_server)
+    >>> t.daemon=True
+    >>> t.start()
+
+A proxy now allows us to call the methods
+
+    >>> from lovely.jsonrpc import proxy
+    >>> client = proxy.ServerProxy('http://localhost:11080/demo')
+    >>> client.echo(1)
+    1
+
+Asynchronous Methods
+====================
+
+    >>> import time
+
+To demonstrate the async behaviour we create a simple async
+synchronous function which just sleeps for a given time and calls a
+callback afterwords.
+
+    >>> def do_sleep(t, cb):
+    ...     time.sleep(t)
+    ...     cb(t)
+
+The actual API method takes a callback argument. Note that this
+argument needs to be named ``callback``, in order for the dispatcher
+to work. We also decorate the function so that the dispatcher knows
+that it has to inject a callback into the arguments.
+
+    >>> @dispatcher.async
+    ... def sleepy(t, callback):
+    ...     t = threading.Thread(target=do_sleep, args=[t, callback])
+    ...     t.start()
+
+The method needs to be registered.
+
+    >>> demo.register_method(sleepy, 'sleepy')
+
+We call the proxy twice in parallel via threading. The call_sleepy
+function prints out pre and post call.
+
+    >>> to_wait = []
+    >>> def call_sleepy(t):
+    ...     print "Calling sleepy", t
+    ...     client = proxy.ServerProxy('http://localhost:11080/demo')
+    ...     print client.sleepy(t)
+
+Here the actual start, shows that the 0.4 is started at first.
+
+    >>> for i in (0.4, 0.2):
+    ...     t = threading.Thread(target=call_sleepy, args=[i])
+    ...     t.start()
+    ...     to_wait.append(t)
+    ...     # wait a little for the start to complete to have consistent output
+    ...     time.sleep(0.01)
+    Calling sleepy 0.4
+    Calling sleepy 0.2
+
+
+The 0.4 thread ends last because it slept longer.
+
+    >>> for t in to_wait:
+    ...     t.join()
+    0.2
+    0.4
+
+Exception Handling
+==================
+
+Let's try an async method which raises an exception before it gives
+back execution.
+
+    >>> @dispatcher.async
+    ... def dividebyzero(callback):
+    ...     x = 1/0
+    ...     callback(1)
+
+
+    >>> demo.register_method(dividebyzero)
+    >>> client = proxy.ServerProxy('http://localhost:11080/demo')
+    >>> client.dividebyzero()
+    Traceback (most recent call last):
+    ...
+    RemoteException: {'message': 'integer division or modulo by zero',
+                      'type': 'ZeroDivisionError'}
+
+It is important to note, that the method should always call the
+callback. If not, the connection to the client connection will
+hang. To report an exception call the callback with the error
+argument like this::
+
+    >>> def do_divide(callback):
+    ...     res = -1
+    ...     try:
+    ...         res = 1/0
+    ...     except Exception, e:
+    ...         callback(None, error=e)
+    ...     else:
+    ...         callback(res)
+
+    >>> @dispatcher.async
+    ... def dividebyzero2(callback):
+    ...     t = threading.Thread(target=do_divide, args=[callback])
+    ...     t.start()
+    >>> demo.register_method(dividebyzero2)
+    >>> client.dividebyzero2()
+    Traceback (most recent call last):
+    ...
+    RemoteException: {'message': 'integer division or modulo by zero', 'type': 'ZeroDivisionError'}
+

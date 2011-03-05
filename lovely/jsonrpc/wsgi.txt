@@ -1,0 +1,74 @@
+=============
+WSGI JSON-RPC
+=============
+
+An wsgi-application that dispatches registered apis to a specific
+entrypoint.
+
+    >>> from lovely.jsonrpc import wsgi
+
+The wsgi app takes a dictionary of entrypoints along with dispatchers
+as constructor arugments. So first we need to create a dispatcher.
+
+    >>> from lovely.jsonrpc import dispatcher
+    >>> demo1 = dispatcher.JSONRPCDispatcher()
+    >>> demo2 = dispatcher.JSONRPCDispatcher()
+
+Now we create the app and a test client for each.
+
+    >>> app = wsgi.WSGIJSONRPCApplication(
+    ...     {'demo1':demo1,
+    ...      'demo2':demo2}
+    ...     )
+
+    >>> from webtest import TestApp
+    >>> app = TestApp(app)
+
+    >>> from lovely.jsonrpc.testing import TestJSONRPCProxy
+    >>> client1 = TestJSONRPCProxy('/demo1', app)
+    >>> client2 = TestJSONRPCProxy('/demo2', app)
+
+Let us register a simple method on demo1.
+
+    >>> def echo(s):
+    ...     return s
+
+    >>> demo1.register_method(echo, 'echo')
+
+Calling a method on proxy.
+
+    >>> client1.echo(1)
+    1
+
+If the method is not found an exception gets raised.
+
+    >>> client2.echo(1)
+    Traceback (most recent call last):
+    ...
+    RemoteException: {'message': "method 'echo' not found", 'type': 'JSONRPCError'}
+
+Let us register another method that fails.
+
+    >>> def zero_division():
+    ...     return 1/0
+
+    >>> demo1.register_method(zero_division, 'zero_division')
+
+We get a RemoteException now.
+
+    >>> client1.zero_division()
+    Traceback (most recent call last):
+    ...
+    RemoteException: {'message': 'integer division or modulo by zero',
+                      'type': 'ZeroDivisionError'}
+
+If the entrypoint is not found a 404 is raised.
+
+    >>> client3 = TestJSONRPCProxy('/demo3', app)
+    >>> client3.echo(1)
+    Traceback (most recent call last):
+    ...
+    AppError: Bad response: 404 NotFound ...
+    404 Not found
+
+
