@@ -1,10 +1,18 @@
-#body { font-family: arial; background-color: #333; font-size: 18px; color: #888; padding: 15px; }
+#body { font-family: arial; background-color: #333; font-size: 18px; color: #369; padding: 15px; }
 span { margin: 2px; float: left; width: 100%; }
+#device_links span { width: auto; margin: 10px; }
+#device_links span:hover { cursor: pointer; }
 
-.translation { color: #555; }
+.separator { clear: both; }
+
+.highlight { background-color: #555; }
+
+.translation { color: #456; }
 .translation a:link {color: #555}
+.translation a:visited {color: #555}
 
-h4 { font-size: 1.5em; padding: 45px 5px 5px 5px; color: #EEE; clear: both; }
+h4 { font-size: 1.5em; text-align: center; padding: 45px 5px 5px 5px; color: #ccc; clear: both; }
 
-a:link {color: #AAA}
-a:visited {color: #AAA; }
+a:link {text-decoration: none; color: #AAA}
+a:visited {text-decoration: none; color: #AAA; }
+a:hover {text-decoration: underline; }

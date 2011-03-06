@@ -1,12 +1,17 @@
 <html>
   <head>
-    <link rel="stylesheet" type="text/css" href="css/reset.css" /> 
-    <link rel="stylesheet" type="text/css" href="css/style.css" /> 
+    <link rel="stylesheet" type="text/css" href="/css/reset.css" /> 
+    <link rel="stylesheet" type="text/css" href="/css/style.css" /> 
     <script src="/js/jquery-1.5.1.js" type="text/javascript"></script> 
     <script src="/js/jquery.xdomainajax.js" type="text/javascript"></script> 
     <script src="/js/nightlies.js" type="text/javascript"></script> 
   </head>
   <body id="body">
-      <div id="merged_changes"></div>
+      <div id="device_links">
+          <span class="device"><a href="/?device=ace">Ace</a></span>
+          <span class="device"><a href="/?device=encore">Encore</a></span>
+      </div>
+      <hr class="separator" />
+      <div id="merged_changes">Please wait, while loading changesets and nightlies...</div>
   </body>
 </html>

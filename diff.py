@@ -43,6 +43,7 @@ class Ajax(webapp.RequestHandler):
         }
 
         q = Change.all()
+        q.order('-last_updated')
 
         common = self.common_projects()
 
@@ -54,6 +55,13 @@ class Ajax(webapp.RequestHandler):
         return filtered
 
     def get(self):
+        device = "ace"
+
+        qd = self.request.get('device')
+
+        if qd:
+            device = qd
+
         change_proxy = proxy.ServerProxy('http://review.cyanogenmod.com/gerrit/rpc/ChangeListService')
         changes = change_proxy.allQueryNext("status:merged","z",100)['changes']
 
@@ -73,7 +81,7 @@ class Ajax(webapp.RequestHandler):
             change.put()
 
         self.response.headers['Content-Type'] = 'text/json'
-        self.response.out.write(json.dumps(self.filter("ace")))
+        self.response.out.write(json.dumps(self.filter(device)))
 
 
 application = webapp.WSGIApplication(

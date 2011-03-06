@@ -1,7 +1,10 @@
 application: cm-nightlies
-version: 1
+version: 5
 runtime: python
 api_version: 1
+
+builtins:
+- datastore_admin: on
 
 handlers:
 - url: /css

@@ -1,6 +1,7 @@
 var nightlies = [];
 var merged;
-var buildbot_offset = 0;
+var buildbot_offset = 8;
+var device = "ace";
 
 Date.prototype.addHours= function(h){
     this.setHours(this.getHours()+h);
@@ -20,10 +21,12 @@ function parse_date(date_string) {
 function main() {
     if (!(nightlies && merged)) { return; }
 
+    $('#merged_changes').empty();
+
     // console.log(nightlies);
     // console.log(merged);
 
-    console.log("got all required data, working...");
+    // console.log("got all required data, working...");
 
     var nightly = nightlies.shift();
 
@@ -31,9 +34,12 @@ function main() {
         nd = parse_date(nightly[1])
         cd = parse_date(e.last_updated)
 
-        nd.addHours(20)
+        nd.addHours(buildbot_offset)
+
+        // console.log("Comparing " + nd + " to " + cd);
 
         if (nd > cd) {
+            // console.log("Nightly is older than change");
             $('#merged_changes').append("<h4>" + nightly[0] + "</h4>");
             nightly = nightlies.shift();
         }
@@ -44,12 +50,17 @@ function main() {
         $('#merged_changes').append("<span>" + change + "</span>");
     });
 
-    $("span:contains('ranslation')").addClass("translation");
+    $("span:contains('ranslat')").addClass("translation");
+    $("span:contains('ussian')").addClass("translation");
+    $("span:contains('hinese')").addClass("translation");
+    $("span:contains('erman')").addClass("translation");
+
+    $("a[href*='"+device+"']").addClass("highlight");
 
 }
 
 function parse_nightlies(data) {
-    console.log("got nightlies");
+    // console.log("got nightlies");
 
     nightlies_raw  = data.responseText.match(/cm_[\s\S]*?\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/g);
 
@@ -63,21 +74,30 @@ function parse_nightlies(data) {
 }
 
 function parse_changelog(data) {
-    console.log("got changelog");
+    // console.log("got changelog");
 
     merged = data;
 
     main();
 }
 
+function get_qs(key, default_) {
+  if (default_==null) default_=""; 
+  key = key.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+  var regex = new RegExp("[\\?&]"+key+"=([^&#]*)");
+  var qs = regex.exec(window.location.href);
+  if(qs == null)
+    return default_;
+  else
+    return qs[1];
+}
+
 $(document).ready(function () {
-    var device = "ace";
+    device = get_qs("device", device);
 
     var nightlies = "http://mirror.teamdouche.net/"
     var changelog = "/changelog/"
 
-    console.log("getting nightlies...");
-
-    $.get(changelog, success=parse_changelog);
+    $.get(changelog, {device: device}, parse_changelog);
     $.get(nightlies, {device: device}, parse_nightlies);
 });
