@@ -23,6 +23,8 @@ function main() {
 
     var nightly = nightlies.shift();
 
+    if(!nightly) { return; }
+
     merged.forEach(function(e, i, a) {
         nd = parse_date(nightly[1])
         cd = parse_date(e.last_updated)
@@ -46,7 +48,7 @@ function main() {
     $("span:contains('hinese')").addClass("translation");
     $("span:contains('erman')").addClass("translation");
 
-    $("a[href*='"+device+"']").addClass("highlight");
+    $("a[href$='"+device+"']").addClass("highlight");
 
 }
 
