@@ -13,6 +13,22 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.ext import db
 
 
+device_specific = {
+    "ace": ["android_device_htc_ace", "htc-kernel-msm7x30"],
+    "bravo": ["android_device_htc_bravo"],
+    "bravoc": ["android_device_htc_bravoc"],
+    "crespo": ["android_device_samsung_crespo"],
+    "encore": ["android_device_bn_encore"],
+    "glacier": ["android_device_htc_glacier", "htc-kernel-msm7x30"],
+    "hero": ["android_device_htc_hero"],
+    "heroc": ["android_device_htc_heroc"],
+    "passion": ["android_device_htc_passion",
+                "android_device_htc_passion-common"],
+    "supersonic": ["android_device_htc_supersonic"],
+    "vision": ["android_device_htc_vision", "htc-kernel-msm7x30"]
+}
+
+
 class Change(db.Model):
     id = db.IntegerProperty()
     project = db.StringProperty()
@@ -52,7 +68,8 @@ skipped %d changes" % (len(changes), skipped))
 class MainPage(webapp.RequestHandler):
     def get(self):
         path = os.path.join(os.path.dirname(__file__), 'index.html')
-        self.response.out.write(template.render(path, {}))
+        self.response.out.write(template.render(path,
+            {'devices':sorted(device_specific.keys())}))
 
 
 class Ajax(webapp.RequestHandler):
@@ -65,21 +82,6 @@ class Ajax(webapp.RequestHandler):
 
     def filter(self, device):
         filtered = []
-
-        device_specific = {
-            "ace": ["android_device_htc_ace", "htc-kernel-msm7x30"],
-            "bravo": ["android_device_htc_bravo"],
-            "bravoc": ["android_device_htc_bravoc"],
-            "crespo": ["android_device_samsung_crespo"],
-            "encore": ["android_device_bn_encore"],
-            "glacier": ["android_device_htc_glacier", "htc-kernel-msm7x30"],
-            "hero": ["android_device_htc_hero"],
-            "heroc": ["android_device_htc_heroc"],
-            "passion": ["android_device_htc_passion",
-                        "android_device_htc_passion-common"],
-            "supersonic": ["android_device_htc_supersonic"],
-            "vision": ["android_device_htc_vision", "htc-kernel-msm7x30"]
-        }
 
         q = Change.all()
         q.order('-last_updated')
