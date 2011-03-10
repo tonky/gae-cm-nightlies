@@ -20,6 +20,27 @@ class Change(db.Model):
     last_updated = db.StringProperty()
 
 
+class ReviewsCron(webapp.RequestHandler):
+    def get(self):
+        change_proxy = proxy.ServerProxy('http://review.cyanogenmod.com/gerrit/rpc/ChangeListService')
+        changes = change_proxy.allQueryNext("status:merged","z",100)['changes']
+
+        for c in changes:
+            q = db.GqlQuery("SELECT * FROM Change " +
+                "WHERE id = :1", c['id']['id'])
+
+            if q.fetch(1):
+                # logging.debug("%d: already in db" % c['id']['id'])
+                continue
+
+            change = Change(id=c['id']['id'],
+                    project=c['project']['key']['name'].split("/")[1],
+                    subject=c['subject'],
+                    last_updated=c['lastUpdatedOn']
+                    )
+            change.put()
+
+
 class MainPage(webapp.RequestHandler):
     def get(self):
         path = os.path.join(os.path.dirname(__file__), 'index.html')
@@ -62,30 +83,13 @@ class Ajax(webapp.RequestHandler):
         if qd:
             device = qd
 
-        change_proxy = proxy.ServerProxy('http://review.cyanogenmod.com/gerrit/rpc/ChangeListService')
-        changes = change_proxy.allQueryNext("status:merged","z",100)['changes']
-
-        for c in changes:
-            q = db.GqlQuery("SELECT * FROM Change " +
-                "WHERE id = :1", c['id']['id'])
-
-            if q.fetch(1):
-                # logging.debug("%d: already in db" % c['id']['id'])
-                continue
-
-            change = Change(id=c['id']['id'],
-                    project=c['project']['key']['name'].split("/")[1],
-                    subject=c['subject'],
-                    last_updated=c['lastUpdatedOn']
-                    )
-            change.put()
-
         self.response.headers['Content-Type'] = 'text/json'
         self.response.out.write(json.dumps(self.filter(device)))
 
 
 application = webapp.WSGIApplication(
-                                     [('/', MainPage), ('/changelog/', Ajax)],
+                                     [('/', MainPage), ('/changelog/', Ajax),
+                                         ('/pull_reviews/', ReviewsCron)],
                                      debug=True)
 
 def main():
