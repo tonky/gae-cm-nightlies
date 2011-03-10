@@ -38,9 +38,15 @@ class Change(db.Model):
 
 class ReviewsCron(webapp.RequestHandler):
     def get(self):
+        amount = 40
+
+        qa = self.request.get('amount')
+
+        if qa: amount = qa
+
         skipped = 0
         change_proxy = proxy.ServerProxy('http://review.cyanogenmod.com/gerrit/rpc/ChangeListService')
-        changes = change_proxy.allQueryNext("status:merged","z",40)['changes']
+        changes = change_proxy.allQueryNext("status:merged","z",amount)['changes']
         known_ids = []
 
         q = db.GqlQuery("SELECT * FROM Change")
