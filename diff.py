@@ -22,6 +22,7 @@ class Change(db.Model):
 
 class ReviewsCron(webapp.RequestHandler):
     def get(self):
+        skipped = 0
         change_proxy = proxy.ServerProxy('http://review.cyanogenmod.com/gerrit/rpc/ChangeListService')
         changes = change_proxy.allQueryNext("status:merged","z",100)['changes']
 
@@ -31,6 +32,7 @@ class ReviewsCron(webapp.RequestHandler):
 
             if q.fetch(1):
                 # logging.debug("%d: already in db" % c['id']['id'])
+                skipped += 1
                 continue
 
             change = Change(id=c['id']['id'],
@@ -39,6 +41,10 @@ class ReviewsCron(webapp.RequestHandler):
                     last_updated=c['lastUpdatedOn']
                     )
             change.put()
+
+        self.response.headers['Content-Type'] = 'text/plain'
+        self.response.out.write("Cron ran, got %d changes from server, \
+skipped %d changes" % (len(changes), skipped))
 
 
 class MainPage(webapp.RequestHandler):
