@@ -24,13 +24,15 @@ class ReviewsCron(webapp.RequestHandler):
     def get(self):
         skipped = 0
         change_proxy = proxy.ServerProxy('http://review.cyanogenmod.com/gerrit/rpc/ChangeListService')
-        changes = change_proxy.allQueryNext("status:merged","z",100)['changes']
+        changes = change_proxy.allQueryNext("status:merged","z",40)['changes']
+        known_ids = []
+
+        q = db.GqlQuery("SELECT * FROM Change")
+
+        known_ids = [c.id for c in q.fetch(40)]
 
         for c in changes:
-            q = db.GqlQuery("SELECT * FROM Change " +
-                "WHERE id = :1", c['id']['id'])
-
-            if q.fetch(1):
+            if c['id']['id'] in known_ids:
                 # logging.debug("%d: already in db" % c['id']['id'])
                 skipped += 1
                 continue
