@@ -1,10 +1,11 @@
+from google.appengine.dist import use_library
+use_library('django', '1.2')
+
 import logging
 import os
 
 from lovely.jsonrpc import proxy
 
-from google.appengine.dist import use_library
-use_library('django', '1.2')
 from django.utils import simplejson as json
 
 from google.appengine.ext import webapp
@@ -42,20 +43,19 @@ class ReviewsCron(webapp.RequestHandler):
 
         qa = self.request.get('amount')
 
-        if qa: amount = qa
+        if qa: amount = int(qa)
 
         skipped = 0
         change_proxy = proxy.ServerProxy('http://review.cyanogenmod.com/gerrit/rpc/ChangeListService')
         changes = change_proxy.allQueryNext("status:merged","z",amount)['changes']
         known_ids = []
 
-        q = db.GqlQuery("SELECT * FROM Change")
+        q = db.GqlQuery("SELECT * FROM Change order by last_updated desc")
 
-        known_ids = [c.id for c in q.fetch(40)]
+        known_ids = [int(c.id) for c in q.fetch(amount)]
 
         for c in changes:
             if c['id']['id'] in known_ids:
-                # logging.debug("%d: already in db" % c['id']['id'])
                 skipped += 1
                 continue
 
