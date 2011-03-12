@@ -5,7 +5,10 @@ span { margin: 2px; float: left; width: 100%; }
 
 .separator { clear: both; }
 
+#hide_translations { float: right; color: #666; }
+
 .highlight { background-color: #555; }
+.hidden { display: none; }
 
 .translation { color: #456; }
 .translation a:link {color: #555}

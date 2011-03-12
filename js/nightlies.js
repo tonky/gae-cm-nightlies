@@ -44,12 +44,14 @@ function main() {
     });
 
     $("span:contains('ranslat')").addClass("translation");
+    $("span:contains('ocaliz')").addClass("translation");
     $("span:contains('ussian')").addClass("translation");
     $("span:contains('hinese')").addClass("translation");
     $("span:contains('erman')").addClass("translation");
 
     $("a[href$='"+device+"']").addClass("highlight");
 
+    trans_visibility();
 }
 
 function parse_nightlies(data) {
@@ -80,12 +82,26 @@ function get_qs(key, default_) {
     return qs[1];
 }
 
+function trans_visibility() {
+    if ($("#hide_them").attr("checked")) {
+        $(".translation").addClass("hidden");
+        $.cookie('cm-nightlies', 1);
+    } else {
+        $(".translation").removeClass("hidden");
+        $.cookie('cm-nightlies', null);
+    }
+}
+
 $(document).ready(function () {
     device = get_qs("device", device);
+
+    if ($.cookie('cm-nightlies')) { $("#hide_them").attr("checked", true); }
 
     var nightlies = "http://mirror.teamdouche.net/"
     var changelog = "/changelog/"
 
     $.get(changelog, {device: device}, parse_changelog);
     $.get(nightlies, {device: device}, parse_nightlies);
+
+    $("#hide_them").click(function() { trans_visibility(); });
 });
