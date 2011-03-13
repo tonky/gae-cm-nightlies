@@ -17,8 +17,8 @@ from google.appengine.ext import db
 device_specific = {
     "ace": ["android_device_htc_ace", "htc-kernel-msm7x30"],
     "blade": ["android_device_zte_blade"],
-    "bravo": ["android_device_htc_bravo"],
-    "bravoc": ["android_device_htc_bravoc"],
+    "bravo": ["cm-kernel", "android_device_htc_bravo"],
+    "bravoc": ["cm-kernel", "android_device_htc_bravoc"],
     "buzz": ["android_device_htc_buzz"],
     "click": ["android_device_htc_click"],
     "crespo": ["android_device_samsung_crespo"],
