@@ -16,12 +16,16 @@ from google.appengine.ext import db
 
 device_specific = {
     "ace": ["android_device_htc_ace", "htc-kernel-msm7x30"],
+    "blade": ["android_device_zte_blade"],
     "bravo": ["android_device_htc_bravo"],
     "bravoc": ["android_device_htc_bravoc"],
+    "buzz": ["android_device_htc_buzz"],
+    "click": ["android_device_htc_click"],
     "crespo": ["android_device_samsung_crespo"],
     "encore": ["android_device_bn_encore"],
     "glacier": ["android_device_htc_glacier", "htc-kernel-msm7x30"],
     "hero": ["android_device_htc_hero"],
+    "inc": ["android_device_htc_inc"],
     "heroc": ["android_device_htc_heroc"],
     "passion": ["android_device_htc_passion",
                 "android_device_htc_passion-common"],
@@ -106,7 +110,7 @@ class Ajax(webapp.RequestHandler):
 
         qd = self.request.get('device')
 
-        if qd:
+        if qd and qd in device_specific.keys():
             device = qd
 
         self.response.headers['Content-Type'] = 'text/json'

@@ -5,6 +5,8 @@ span { margin: 2px; float: left; width: 100%; }
 
 .separator { clear: both; }
 
+h3.error { font-size: 1.8em; color: #f00; }
+
 #hide_translations { float: right; color: #666; }
 
 .highlight { background-color: #555; }
