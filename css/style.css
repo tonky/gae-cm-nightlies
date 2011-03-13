@@ -17,7 +17,7 @@ span { margin: 2px; float: left; width: 100%; }
 h4 { font-size: 1.5em; text-align: center; padding: 45px 5px 5px 5px; color: #ccc; clear: both; }
 .error { font-size: 1.8em; color: #f00; }
 
-#footer { float: left; margin: 20px 0 0 0; font-size: 0.8em; color: #555; }
+#footer { float: left; width: 100%; margin: 20px 0 0 0; text-align: center; font-size: 0.8em; color: #555; }
 
 #footer a:link {text-decoration: none; color: #444}
 #footer a:visited {text-decoration: none; color: #444; }
