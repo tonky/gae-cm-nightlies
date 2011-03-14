@@ -25,11 +25,11 @@ device_specific = {
     "encore": ["android_device_bn_encore"],
     "glacier": ["android_device_htc_glacier", "htc-kernel-msm7x30"],
     "hero": ["android_device_htc_hero"],
-    "inc": ["android_device_htc_inc"],
+    "inc": ["htc-kernel-incrediblec", "android_device_htc_inc"],
     "heroc": ["android_device_htc_heroc"],
     "passion": ["android_device_htc_passion",
                 "android_device_htc_passion-common"],
-    "supersonic": ["android_device_htc_supersonic"],
+    "supersonic": ["htc-kernel-supersonic", "android_device_htc_supersonic"],
     "vision": ["android_device_htc_vision", "htc-kernel-msm7x30"]
 }
 
