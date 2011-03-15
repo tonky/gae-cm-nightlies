@@ -122,7 +122,7 @@ class Ajax(webapp.RequestHandler):
         q = Change.all()
         q.order('-last_updated')
 
-        changes = q.fetch(300)
+        changes = q.fetch(amount)
 
         memcache.add('last_changes', changes, 600)
 
