@@ -1,7 +1,7 @@
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>CyanogenMod nightlies changelogs</title>
+    <title>CyanogenMod nightlies changelog for {{ for_device|capfirst }}</title>
     <link rel="stylesheet" type="text/css" href="/css/reset.css" />
     <link rel="stylesheet" type="text/css" href="/css/style.css" />
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js" type="text/javascript"></script>
@@ -12,7 +12,7 @@
   <body id="body">
       <div id="device_links">
           {% for device in devices %}
-          <span><a href="/?device={{ device }}">{{ device|capfirst}}</a></span>
+              <span><a href="/?device={{ device }}">{{ device|capfirst}}</a></span>
           {% endfor %}
       </div>
       <div id="hide_translations">

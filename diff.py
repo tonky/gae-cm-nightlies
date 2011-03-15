@@ -102,9 +102,16 @@ class ReviewsCron(webapp.RequestHandler):
 
 class MainPage(webapp.RequestHandler):
     def get(self):
+        device = "ace"
+
+        qd = self.request.get('device')
+
+        if qd and qd in device_specific.keys():
+            device = qd
+
         path = os.path.join(os.path.dirname(__file__), 'index.html')
         self.response.out.write(template.render(path,
-            {'devices':sorted(device_specific.keys())}))
+            {'devices':sorted(device_specific.keys()), "for_device": device}))
 
 
 class Ajax(webapp.RequestHandler):
