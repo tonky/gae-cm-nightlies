@@ -123,7 +123,7 @@ class Ajax(webapp.RequestHandler):
         return cp
 
     def filter(self, device):
-        filtered = memcache.get('filtered')
+        filtered = memcache.get('filtered', device)
 
         if filtered and filtered is not None:
             return filtered
@@ -137,7 +137,7 @@ class Ajax(webapp.RequestHandler):
                 filtered.append({"id": c.id, "project": c.project,
                     "subject": c.subject, "last_updated": c.last_updated})
 
-        memcache.set('filtered', filtered, 600)
+        memcache.set('filtered', filtered, 600, namespace=device)
 
         return filtered
 
