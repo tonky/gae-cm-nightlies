@@ -47,6 +47,7 @@ function main() {
     $("span:contains('ocaliz')").addClass("translation");
     $("span:contains('ussian')").addClass("translation");
     $("span:contains('hinese')").addClass("translation");
+    $("span:contains('ortug')").addClass("translation");
     $("span:contains('erman')").addClass("translation");
 
     $("a[href$='"+device+"']").addClass("highlight");

@@ -1,0 +1,7 @@
+indexes:
+
+- kind: Change
+  ancestor: no
+  properties:
+  - name: last_updated
+    direction: desc
