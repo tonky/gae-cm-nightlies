@@ -44,21 +44,24 @@ class Change(db.Model):
 
 
 class ReviewsCron(webapp.RequestHandler):
-    def get(self):
-        amount = 40
+    def _known_ids(self, amount):
+        known = memcache.get('known_ids')
 
-        qa = self.request.get('amount')
-
-        if qa: amount = int(qa)
-
-        skipped = 0
-        change_proxy = proxy.ServerProxy('http://review.cyanogenmod.com/gerrit/rpc/ChangeListService')
-        changes = change_proxy.allQueryNext("status:merged","z",amount)['changes']
-        known_ids = []
+        if known is not None:
+            return known
 
         q = db.GqlQuery("SELECT * FROM Change order by last_updated desc")
 
         known_ids = [int(c.id) for c in q.fetch(amount)]
+
+        memcache.set('known_ids', known_ids, 999999)
+
+        return known_ids
+
+    def _update_changes(self, changes, known_ids):
+        skipped = 0
+
+        memcache.delete('known_ids')
 
         for c in changes:
             if c['id']['id'] in known_ids:
@@ -73,8 +76,28 @@ class ReviewsCron(webapp.RequestHandler):
             change.put()
 
         self.response.headers['Content-Type'] = 'text/plain'
-        self.response.out.write("Cron ran, got %d changes from server, \
-skipped %d changes" % (len(changes), skipped))
+        self.response.out.write("Skipped %d of %d changes" % (skipped, len(changes)))
+
+    def get(self):
+        amount = 40
+
+        qa = self.request.get('amount')
+
+        if qa: amount = int(qa)
+
+        change_proxy = proxy.ServerProxy('http://review.cyanogenmod.com/gerrit/rpc/ChangeListService')
+        changes = change_proxy.allQueryNext("status:merged","z",amount)['changes']
+
+        known_ids = self._known_ids(amount)
+
+        received_ids = [c['id']['id'] for c in changes]
+
+        if sorted(known_ids) == sorted(received_ids):
+            self.response.headers['Content-Type'] = 'text/plain'
+            self.response.out.write("Skipped all %d changes" % len(changes))
+            return
+
+        return self._update_changes(changes, known_ids)
 
 
 class MainPage(webapp.RequestHandler):
@@ -89,18 +112,22 @@ class Ajax(webapp.RequestHandler):
         common = memcache.get('common_projects')
 
         if common is not None:
-            # logging.debug("serving projects from memcache")
             return common
 
         f = open('common_projects.txt', 'r')
         cp = [p.strip() for p in f.readlines()]
         f.closed
 
-        memcache.add("common_projects", cp, 3600)
+        memcache.set("common_projects", cp, 3600)
 
         return cp
 
     def filter(self, device):
+        filtered = memcache.get('filtered')
+
+        if filtered is not None:
+            return filtered
+
         filtered = []
 
         common = self.common_projects()
@@ -110,23 +137,15 @@ class Ajax(webapp.RequestHandler):
                 filtered.append({"id": c.id, "project": c.project,
                     "subject": c.subject, "last_updated": c.last_updated})
 
+        memcache.set('filtered', filtered, 600)
+
         return filtered
 
     def _last_changes(self, amount=300):
-        last_changes = memcache.get('last_changes')
-
-        if last_changes is not None:
-            # logging.debug("serving changes from memcache")
-            return last_changes
-
         q = Change.all()
         q.order('-last_updated')
 
-        changes = q.fetch(amount)
-
-        memcache.add('last_changes', changes, 600)
-
-        return changes
+        return q.fetch(amount)
 
     def get(self):
         device = "ace"
