@@ -125,7 +125,7 @@ class Ajax(webapp.RequestHandler):
     def filter(self, device):
         filtered = memcache.get('filtered')
 
-        if filtered is not None:
+        if filtered and filtered is not None:
             return filtered
 
         filtered = []

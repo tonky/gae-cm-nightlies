@@ -97,3 +97,4 @@ android_system_extras
 android_system_netd
 android_system_vold
 android_system_wlan_ti
+android_vendor_cyanogen
