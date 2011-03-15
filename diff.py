@@ -8,6 +8,8 @@ from lovely.jsonrpc import proxy
 
 from django.utils import simplejson as json
 
+from google.appengine.api import memcache
+
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import run_wsgi_app
@@ -84,26 +86,47 @@ class MainPage(webapp.RequestHandler):
 
 class Ajax(webapp.RequestHandler):
     def common_projects(self):
+        common = memcache.get('common_projects')
+
+        if common is not None:
+            # logging.debug("serving projects from memcache")
+            return common
+
         f = open('common_projects.txt', 'r')
         cp = [p.strip() for p in f.readlines()]
         f.closed
+
+        memcache.add("common_projects", cp, 3600)
 
         return cp
 
     def filter(self, device):
         filtered = []
 
-        q = Change.all()
-        q.order('-last_updated')
-
         common = self.common_projects()
 
-        for c in q.fetch(300):
+        for c in self._last_changes():
             if c.project in common or c.project in device_specific[device]:
                 filtered.append({"id": c.id, "project": c.project,
                     "subject": c.subject, "last_updated": c.last_updated})
 
         return filtered
+
+    def _last_changes(self, amount=300):
+        last_changes = memcache.get('last_changes')
+
+        if last_changes is not None:
+            # logging.debug("serving changes from memcache")
+            return last_changes
+
+        q = Change.all()
+        q.order('-last_updated')
+
+        changes = q.fetch(300)
+
+        memcache.add('last_changes', changes, 600)
+
+        return changes
 
     def get(self):
         device = "ace"
