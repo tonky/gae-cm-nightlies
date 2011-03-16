@@ -29,7 +29,13 @@ function main() {
         nd = parse_date(nightly[1])
         cd = parse_date(e.last_updated)
 
-        nd.addHours(buildbot_offset)
+        // skip this nightly, if next one is newer than current change
+        while (parse_date(nightlies[0][1]) > cd) {
+            $('#merged_changes').append("<h4>" + nightly[0] + "</h4>");
+            nightly = nightlies.shift();
+        }
+
+        // nd.addHours(buildbot_offset)
 
         if (nd > cd) {
             // console.log("Nightly is older than change");
