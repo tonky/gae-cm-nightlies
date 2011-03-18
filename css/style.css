@@ -1,4 +1,4 @@
-#body { font-family: arial; background-color: #333; font-size: 18px; color: #369; padding: 15px; }
+body { font-family: arial; background-color: #333; font-size: 18px; color: #369; padding: 15px; }
 span { margin: 2px; float: left; width: 100%; }
 #device_links span { width: auto; margin: 10px; }
 #device_links span:hover { cursor: pointer; }

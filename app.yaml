@@ -1,5 +1,5 @@
 application: cm-nightlies
-version: 6
+version: 7
 runtime: python
 api_version: 1
 
@@ -7,11 +7,17 @@ builtins:
 - datastore_admin: on
 
 handlers:
+- url: /img
+  static_dir: img
+
 - url: /css
   static_dir: css
 
 - url: /js
   static_dir: js
+
+- url: /rss
+  script: rss.py
 
 - url: /.*
   script: diff.py

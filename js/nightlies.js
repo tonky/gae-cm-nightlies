@@ -31,7 +31,7 @@ function main() {
 
         // skip this nightly, if next one is newer than current change
         while (parse_date(nightlies[0][1]) > cd) {
-            $('#merged_changes').append("<h4>" + nightly[0] + "</h4>");
+            $('#merged_changes').append("<h4>" + nightly[0].anchor(nightly[0]) + "</h4>");
             nightly = nightlies.shift();
         }
 
@@ -39,7 +39,7 @@ function main() {
 
         if (nd > cd) {
             // console.log("Nightly is older than change");
-            $('#merged_changes').append("<h4>" + nightly[0] + "</h4>");
+            $('#merged_changes').append("<h4>" + nightly[0].anchor(nightly[0]) + "</h4>");
             nightly = nightlies.shift();
         }
 
@@ -56,9 +56,16 @@ function main() {
     $("span:contains('ortug')").addClass("translation");
     $("span:contains('erman')").addClass("translation");
 
-    $("a[href$='"+device+"']").addClass("highlight");
+    $("a[href$='/?device="+device+"']").addClass("highlight");
 
     trans_visibility();
+
+    var loc = document.location.toString();
+
+    if (loc.match('#')) {
+      var anchor = '#' + loc.split('#')[1];
+      location.href = anchor;
+    }
 }
 
 function parse_nightlies(data) {

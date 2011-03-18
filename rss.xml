@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<rss version="2.0">
+  <channel>
+    <ttl>5</ttl>
+    <title>CM {{ device }} nightlies</title>
+    <link>http://cm-nightlies.appspot.com/?device={{ device }}</link>
+    {% for name, date in changes %}
+    <item>
+       <title>{{ name }}</title>
+       <link>http://cm-nightlies.appspot.com/?device={{ device }}#{{ name }}</link>
+       <description>New nightly built at {{ date }}</description>
+    </item>
+    {% endfor %}
+  </channel>
+</rss>
