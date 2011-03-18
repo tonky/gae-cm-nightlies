@@ -32,7 +32,8 @@ device_specific = {
     "passion": ["android_device_htc_passion",
                 "android_device_htc_passion-common"],
     "supersonic": ["htc-kernel-supersonic", "android_device_htc_supersonic"],
-    "vision": ["android_device_htc_vision", "htc-kernel-msm7x30"]
+    "vision": ["android_device_htc_vision", "htc-kernel-msm7x30"],
+    "z71": ["android_device_commtiva_z71"]
 }
 
 
