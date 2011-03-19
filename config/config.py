@@ -31,6 +31,7 @@ device_specific = {
     "glacier": ["android_device_htc_glacier", "htc-kernel-msm7x30"],
     "hero": ["android_device_htc_hero"],
     "inc": ["htc-kernel-incrediblec", "android_device_htc_inc"],
+    "legend": ["android_device_htc_legend"],
     "heroc": ["android_device_htc_heroc"],
     "passion": ["android_device_htc_passion",
                 "android_device_htc_passion-common"],
