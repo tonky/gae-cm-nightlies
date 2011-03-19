@@ -3,12 +3,15 @@
   <channel>
     <ttl>5</ttl>
     <title>CM {{ device }} nightlies</title>
+    <language>en-us</language>
+    <webMaster>gtonky@gmail.com</webMaster>
+    <lastBuildDate>{{ changes.0.1|date:"r" }}</lastBuildDate>
     <link>http://cm-nightlies.appspot.com/?device={{ device }}</link>
     {% for name, date in changes %}
     <item>
        <title>{{ name }}</title>
        <link>http://cm-nightlies.appspot.com/?device={{ device }}#{{ name }}</link>
-       <description>New nightly built at {{ date }}</description>
+       <pubDate>{{ date|date:"r" }}</pubDate>
     </item>
     {% endfor %}
   </channel>

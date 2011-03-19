@@ -1,5 +1,6 @@
 from config.config import device_specific, Change, qs_device
 
+from datetime import datetime, timedelta
 import httplib
 import logging
 import os
@@ -17,6 +18,8 @@ class Rss(webapp.RequestHandler):
         rss = memcache.get('rss', device)
         if rss: return rss
 
+        nightlies = []
+
         conn = httplib.HTTPConnection("mirror.teamdouche.net")
         conn.request("GET", "/?device=%s" % device)
 
@@ -26,9 +29,16 @@ class Rss(webapp.RequestHandler):
 
         nightlies_raw  = re.findall(name_date, html, re.S);
 
-        memcache.set('rss', nightlies_raw, 300, namespace=device)
+        for name, date in nightlies_raw:
+            naive_dt = datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
 
-        return nightlies_raw
+            utc_dt = naive_dt - timedelta(hours=2)
+
+            nightlies.append((name, utc_dt))
+
+        memcache.set('rss', nightlies, 300, namespace=device)
+
+        return nightlies
 
     def get(self):
         device = qs_device(self)
