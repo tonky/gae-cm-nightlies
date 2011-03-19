@@ -36,7 +36,7 @@ class Rss(webapp.RequestHandler):
 
             nightlies.append((name, utc_dt))
 
-        memcache.set('rss', nightlies, 300, namespace=device)
+        memcache.set('rss', nightlies, 600, namespace=device)
 
         return nightlies
 

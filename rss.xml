@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <rss version="2.0">
   <channel>
-    <ttl>5</ttl>
+    <ttl>10</ttl>
     <title>CM {{ device }} nightlies</title>
     <language>en-us</language>
     <webMaster>gtonky@gmail.com</webMaster>
