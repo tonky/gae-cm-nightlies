@@ -122,4 +122,6 @@ $(document).ready(function () {
     $.get(nightlies, {device: device}, parse_nightlies);
 
     $("#hide_them").click(function() { trans_visibility(); });
+
+    $("#announcement_header").click(function() { $("#announcement_text").toggleClass("hidden") ; });
 });
