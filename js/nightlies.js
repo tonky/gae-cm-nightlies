@@ -8,6 +8,10 @@ Date.prototype.addHours= function(h){
         return this;
 }
 
+function cap_first(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
 function parse_date(date_string) {
     // 2011-03-04 22:16:48.000000000
 
@@ -31,15 +35,18 @@ function main() {
 
         // skip this nightly, if next one is newer than current change
         while (parse_date(nightlies[0][1]) > cd) {
-            $('#merged_changes').append("<h4>" + nightly[0].anchor(nightly[0]) + "</h4>");
+            nightly_link = "<a href='http://mirror.teamdouche.net/?device="+ device +"' name='"+ nightly[0] +"'>" + nightly[0] + "</a>";
+
+            $('#merged_changes').append("<h4>" + nightly_link + "</h4>");
             nightly = nightlies.shift();
         }
 
         // nd.addHours(buildbot_offset)
 
         if (nd > cd) {
-            // console.log("Nightly is older than change");
-            $('#merged_changes').append("<h4>" + nightly[0].anchor(nightly[0]) + "</h4>");
+            nightly_link = "<a href='http://mirror.teamdouche.net/?device="+ device +"' name='"+ nightly[0] +"'>" + nightly[0] + "</a>";
+
+            $('#merged_changes').append("<h4>" + nightly_link + "</h4>");
             nightly = nightlies.shift();
         }
 
@@ -56,7 +63,7 @@ function main() {
     $("span:contains('ortug')").addClass("translation");
     $("span:contains('erman')").addClass("translation");
 
-    $("a[href$='/?device="+device+"']").addClass("highlight");
+    $("#device_links a:contains('" + cap_first(device) + "')").addClass("highlight");
 
     trans_visibility();
 
