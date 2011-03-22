@@ -35,6 +35,7 @@ device_specific = {
     "heroc": ["android_device_htc_heroc"],
     "passion": ["android_device_htc_passion",
                 "android_device_htc_passion-common"],
+    "speedy": ["android_device_htc_speedy"],
     "supersonic": ["htc-kernel-supersonic", "android_device_htc_supersonic"],
     "vision": ["android_device_htc_vision", "htc-kernel-msm7x30"],
     "z71": ["android_device_commtiva_z71"]
