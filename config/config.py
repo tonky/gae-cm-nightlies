@@ -32,6 +32,7 @@ device_specific = {
     "hero": ["android_device_htc_hero"],
     "inc": ["htc-kernel-incrediblec", "android_device_htc_inc"],
     "legend": ["android_device_htc_legend"],
+    "liberty": ["android_device_htc_liberty"],
     "heroc": ["android_device_htc_heroc"],
     "passion": ["android_device_htc_passion",
                 "android_device_htc_passion-common"],
