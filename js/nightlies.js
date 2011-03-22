@@ -30,16 +30,19 @@ function main() {
     if(!nightly) { return; }
 
     merged.forEach(function(e, i, a) {
+        if(!nightly) { return; }
+
         nd = parse_date(nightly[1])
         cd = parse_date(e.last_updated)
 
-        // skip this nightly, if next one is newer than current change
-        while (parse_date(nightlies[0][1]) > cd) {
-            nightly_link = "<a href='http://mirror.teamdouche.net/?device="+ device +"' name='"+ nightly[0] +"'>" + nightly[0] + "</a>";
-
-            $('#merged_changes').append("<h4>" + nightly_link + "</h4>");
-            nightly = nightlies.shift();
-        }
+//        // skip this nightly, if next one is newer than current change
+//        if (parse_date(nightlies[0][1]) > cd) {
+//            nightly_link = "<a href='http://mirror.teamdouche.net/?device="+ device +"' name='"+ nightly[0] +"'>" + nightly[0] + "</a>";
+//
+//            $('#merged_changes').append("<h4>" + nightly_link + "</h4>");
+//
+//            nightly = nightlies.shift();
+//        }
 
         // nd.addHours(buildbot_offset)
 
