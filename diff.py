@@ -21,6 +21,22 @@ def is_subset(a, b):
 
     return True
 
+def last_changes():
+    last_changes = memcache.get('last_changes')
+
+    if last_changes is not None:
+        # logging.debug("-----------> last changes cache hit")
+        return last_changes
+
+    q = db.GqlQuery("SELECT * FROM Change order by last_updated desc")
+
+    last_changes = q.fetch(300)
+
+    memcache.set('last_changes', last_changes)
+
+    return last_changes
+
+
 class ReviewsCron(webapp.RequestHandler):
     def _known_ids(self):
         known = memcache.get('known_ids')
@@ -28,13 +44,8 @@ class ReviewsCron(webapp.RequestHandler):
         if known is not None:
             return known
 
-        q = db.GqlQuery("SELECT * FROM Change order by last_updated desc")
+        known_ids = [int(c.id) for c in last_changes()]
 
-        last_changes = q.fetch(300)
-
-        known_ids = [int(c.id) for c in last_changes]
-
-        memcache.set('last_changes', last_changes)
         memcache.set('known_ids', known_ids)
 
         return known_ids
@@ -54,9 +65,8 @@ class ReviewsCron(webapp.RequestHandler):
                     )
             change.put()
 
-        # update known_ids and last_changes memcache
-        memcache.delete('known_ids')
-        self._known_ids()
+        # flush all memcache on new changes for people to see them immediately
+        memcache.flush_all()
 
         self.response.headers['Content-Type'] = 'text/plain'
         self.response.out.write("Skipped %d of %d changes" % (skipped, len(changes)))
@@ -115,13 +125,15 @@ class Ajax(webapp.RequestHandler):
         filtered = memcache.get('filtered', device)
 
         if filtered and filtered is not None:
+            # logging.debug("-----------> filtered cache hit")
             return filtered
 
         filtered = []
+        lc = last_changes()
 
         common = self.common_projects()
 
-        for c in self._last_changes():
+        for c in lc:
             if c.project in common or c.project in device_specific[device]:
                 filtered.append({"id": c.id, "project": c.project,
                     "subject": c.subject, "last_updated": c.last_updated})
@@ -129,9 +141,6 @@ class Ajax(webapp.RequestHandler):
         memcache.set('filtered', filtered, 600, namespace=device)
 
         return filtered
-
-    def _last_changes(self, amount=300):
-        return memcache.get('last_changes') or []
 
     def get(self):
         device = qs_device(self)
