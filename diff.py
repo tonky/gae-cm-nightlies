@@ -22,7 +22,7 @@ class ReviewsCron(webapp.RequestHandler):
 
         q = db.GqlQuery("SELECT * FROM Change order by last_updated desc")
 
-        known_ids = [int(c.id) for c in q.fetch(amount)]
+        known_ids = [int(c.id) for c in q.fetch(300)]
 
         memcache.set('known_ids', known_ids, 999999)
 
