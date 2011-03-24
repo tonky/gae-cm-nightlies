@@ -22,7 +22,7 @@ def is_subset(a, b):
     return True
 
 class ReviewsCron(webapp.RequestHandler):
-    def _known_ids(self, amount):
+    def _known_ids(self):
         known = memcache.get('known_ids')
 
         if known is not None:
@@ -30,16 +30,17 @@ class ReviewsCron(webapp.RequestHandler):
 
         q = db.GqlQuery("SELECT * FROM Change order by last_updated desc")
 
-        known_ids = [int(c.id) for c in q.fetch(300)]
+        last_changes = q.fetch(300)
 
-        memcache.set('known_ids', known_ids, 999999)
+        known_ids = [int(c.id) for c in last_changes]
+
+        memcache.set('last_changes', last_changes)
+        memcache.set('known_ids', known_ids)
 
         return known_ids
 
     def _update_changes(self, changes, known_ids):
         skipped = 0
-
-        memcache.delete('known_ids')
 
         for c in changes:
             if c['id']['id'] in known_ids:
@@ -52,6 +53,10 @@ class ReviewsCron(webapp.RequestHandler):
                     last_updated=c['lastUpdatedOn']
                     )
             change.put()
+
+        # update known_ids and last_changes memcache
+        memcache.delete('known_ids')
+        self._known_ids()
 
         self.response.headers['Content-Type'] = 'text/plain'
         self.response.out.write("Skipped %d of %d changes" % (skipped, len(changes)))
@@ -66,7 +71,7 @@ class ReviewsCron(webapp.RequestHandler):
         change_proxy = proxy.ServerProxy('http://review.cyanogenmod.com/gerrit/rpc/ChangeListService')
         changes = change_proxy.allQueryNext("status:merged","z",amount)['changes']
 
-        known_ids = self._known_ids(amount)
+        known_ids = self._known_ids()
 
         received_ids = [c['id']['id'] for c in changes]
 
@@ -122,10 +127,7 @@ class Ajax(webapp.RequestHandler):
         return filtered
 
     def _last_changes(self, amount=300):
-        q = Change.all()
-        q.order('-last_updated')
-
-        return q.fetch(amount)
+        return memcache.get('last_changes') or []
 
     def get(self):
         device = qs_device(self)
