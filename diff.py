@@ -13,6 +13,14 @@ from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import run_wsgi_app
 
 
+# tests if all elements of array a are in array b
+def is_subset(a, b):
+    for i in a:
+      if not i in b:
+        return False
+
+    return True
+
 class ReviewsCron(webapp.RequestHandler):
     def _known_ids(self, amount):
         known = memcache.get('known_ids')
@@ -62,7 +70,7 @@ class ReviewsCron(webapp.RequestHandler):
 
         received_ids = [c['id']['id'] for c in changes]
 
-        if sorted(known_ids) == sorted(received_ids):
+        if is_subset(received_ids, known_ids):
             self.response.headers['Content-Type'] = 'text/plain'
             self.response.out.write("Skipped all %d changes" % len(changes))
             return
