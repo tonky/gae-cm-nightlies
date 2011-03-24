@@ -39,7 +39,7 @@ class ReviewsCron(webapp.RequestHandler):
 
         return known_ids
 
-    def _update_changes(self, changes, known_ids):
+    def _update_changes(self, changes=[], known_ids=[]):
         skipped = 0
 
         for c in changes:
@@ -62,6 +62,10 @@ class ReviewsCron(webapp.RequestHandler):
         self.response.out.write("Skipped %d of %d changes" % (skipped, len(changes)))
 
     def get(self):
+        if self.request.get('update_memcache'):
+            memcache.flush_all()
+            return self._update_changes()
+
         amount = 40
 
         qa = self.request.get('amount')
