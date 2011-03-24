@@ -42,6 +42,7 @@ class ReviewsCron(webapp.RequestHandler):
         known = memcache.get('known_ids')
 
         if known is not None:
+            # logging.debug("-----------> known ids cache hit")
             return known
 
         known_ids = [int(c.id) for c in last_changes()]
@@ -73,7 +74,6 @@ class ReviewsCron(webapp.RequestHandler):
 
     def get(self):
         if self.request.get('update_memcache'):
-            memcache.flush_all()
             return self._update_changes()
 
         amount = 40
@@ -124,7 +124,7 @@ class Ajax(webapp.RequestHandler):
     def filter(self, device):
         filtered = memcache.get('filtered', device)
 
-        if filtered and filtered is not None:
+        if filtered is not None:
             # logging.debug("-----------> filtered cache hit")
             return filtered
 
