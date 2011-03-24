@@ -66,7 +66,7 @@ function main() {
     $("span:contains('ortug')").addClass("translation");
     $("span:contains('erman')").addClass("translation");
 
-    $("#device_links a:contains('" + cap_first(device) + "')").addClass("highlight");
+    $("#device_links a[href$='"+device+"']").addClass("highlight");
 
     trans_visibility();
 
