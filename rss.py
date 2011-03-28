@@ -25,7 +25,7 @@ class Rss(webapp.RequestHandler):
 
         html = conn.getresponse().read()
 
-        name_date = "(?P<filename>cm_.*?\.zip).*?(?P<date>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})"
+        name_date = "(?P<filename>cm.*?\.zip).*?(?P<date>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})"
 
         nightlies_raw  = re.findall(name_date, html, re.S);
 
