@@ -30,6 +30,7 @@ device_specific = {
     "encore": ["android_device_bn_encore"],
     "espresso": ["android_device_htc_espresso"],
     "glacier": ["android_device_htc_glacier", "htc-kernel-msm7x30"],
+    "harmony": ["android_device_harmony"],
     "hero": ["android_device_htc_hero"],
     "inc": ["htc-kernel-incrediblec", "android_device_htc_inc"],
     "legend": ["android_device_htc_legend"],
