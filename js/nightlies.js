@@ -1,15 +1,14 @@
 var nightlies = [];
 var merged;
-var buildbot_offset = 0;
 var device = "ace";
 
-Date.prototype.addHours= function(h){
+Date.prototype.addHours = function(h){
     this.setHours(this.getHours()+h);
         return this;
 }
 
-function cap_first(string) {
-    return string.charAt(0).toUpperCase() + string.slice(1);
+String.prototype.cap_first = function(){
+    return this.charAt(0).toUpperCase() + this.slice(1);
 }
 
 function parse_date(date_string) {
@@ -35,17 +34,6 @@ function main() {
         nd = parse_date(nightly[1])
         cd = parse_date(e.last_updated)
 
-//        // skip this nightly, if next one is newer than current change
-//        if (parse_date(nightlies[0][1]) > cd) {
-//            nightly_link = "<a href='http://mirror.teamdouche.net/?device="+ device +"' name='"+ nightly[0] +"'>" + nightly[0] + "</a>";
-//
-//            $('#merged_changes').append("<h4>" + nightly_link + "</h4>");
-//
-//            nightly = nightlies.shift();
-//        }
-
-        // nd.addHours(buildbot_offset)
-
         if (nd > cd) {
             nightly_link = "<a href='http://mirror.teamdouche.net/?device="+ device +"' name='"+ nightly[0] +"'>" + nightly[0] + "</a>";
 
@@ -67,6 +55,7 @@ function main() {
     $("span:contains('erman')").addClass("translation");
     $("span:contains('_" + device + "')").addClass("device");
     $("span:contains('" + device + ":')").addClass("device");
+    $("span:contains('" + device.cap_first() + ":')").addClass("device");
 
     $("#device_links a[href$='"+device+"']").addClass("highlight");
 
