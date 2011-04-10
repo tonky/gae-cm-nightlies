@@ -65,6 +65,8 @@ function main() {
     $("span:contains('hinese')").addClass("translation");
     $("span:contains('ortug')").addClass("translation");
     $("span:contains('erman')").addClass("translation");
+    $("span:contains('_" + device + "')").addClass("device");
+    $("span:contains('" + device + ":')").addClass("device");
 
     $("#device_links a[href$='"+device+"']").addClass("highlight");
 
