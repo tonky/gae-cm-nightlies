@@ -42,7 +42,9 @@ device_specific = {
     "sholes": ["android_device_motorola_sholes"],
     "speedy": ["android_device_htc_speedy"],
     "supersonic": ["htc-kernel-supersonic", "android_device_htc_supersonic"],
+    "vega": ["android_device_advent_vega"],
     "vision": ["android_device_htc_vision", "htc-kernel-msm7x30"],
     "z71": ["android_device_commtiva_z71"],
+    "zeppelin": ["android_device_motorola_zeppelin"],
     "zero": ["android_device_geeksphone_zero"]
 }
