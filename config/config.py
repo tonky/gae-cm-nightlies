@@ -38,6 +38,8 @@ device_specific = {
     "liberty": ["android_device_htc_liberty"],
     "one": ["android_device_geeksphone_one"],
     "heroc": ["android_device_htc_heroc"],
+    "p990": ["android_device_lge_p990"],
+    "p999": ["android_device_lge_p999"],
     "passion": ["android_device_htc_passion",
                 "android_device_htc_passion-common"],
     "sholes": ["android_device_motorola_sholes"],
