@@ -53,6 +53,8 @@ function main() {
     $("span:contains('hinese')").addClass("translation");
     $("span:contains('ortug')").addClass("translation");
     $("span:contains('erman')").addClass("translation");
+    $("span:contains('wedish')").addClass("translation");
+    $("span:contains('typo')").addClass("translation");
     $("span:contains('_" + device + "')").addClass("device");
     $("span:contains('" + device + ":')").addClass("device");
     $("span:contains('" + device.cap_first() + ":')").addClass("device");
