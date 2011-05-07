@@ -1,5 +1,5 @@
 var nightlies = [];
-var merged;
+var merged = [];
 var device = "ace";
 
 Date.prototype.addHours = function(h){
@@ -20,13 +20,11 @@ function parse_date(date_string) {
 }
 
 function main() {
-    if (!(nightlies && merged)) { return; }
-
-    $('#merged_changes').empty();
+    if (nightlies.length == 0 || merged.length == 0) { return; }
 
     var nightly = nightlies.shift();
 
-    if(!nightly) { return; }
+    $('#merged_changes').empty();
 
     merged.forEach(function(e, i, a) {
         if(!nightly) { return; }
@@ -83,6 +81,10 @@ function parse_nightlies(data) {
 
         nightlies.push([parsed[1], parsed[2]]);
     });
+
+    if(nightlies.length == 0) {
+        return $('#merged_changes').text("Unable to parse nightlies, maybe cyanogenmod mirror is down. Please try a bit later.");
+    }
 
     main();
 }
