@@ -97,6 +97,12 @@ class ReviewsCron(webapp.RequestHandler):
         return self._update_changes(changes, known_ids)
 
 
+class Test(webapp.RequestHandler):
+    def get(self):
+        path = os.path.join(os.path.dirname(__file__), 'test.html')
+        self.response.out.write(template.render(path, {}))
+
+
 class MainPage(webapp.RequestHandler):
     def get(self):
         device = qs_device(self)
@@ -151,7 +157,8 @@ class Ajax(webapp.RequestHandler):
 
 application = webapp.WSGIApplication(
                                      [('/', MainPage), ('/changelog/', Ajax),
-                                         ('/pull_reviews/', ReviewsCron)],
+                                         ('/pull_reviews/', ReviewsCron),
+                                         ('/test', Test)],
                                      debug=True)
 
 def main():
