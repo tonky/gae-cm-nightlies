@@ -33,7 +33,7 @@ function main() {
         cd = parse_date(e.last_updated)
 
         if (nd > cd) {
-            nightly_link = "<a href='http://mirror.teamdouche.net/?device="+ device +"' name='"+ nightly[0] +"'>" + nightly[0] + "</a>";
+            nightly_link = "<a href='http://mirror.cyanogenmod.com/?device="+ device +"' name='"+ nightly[0] +"'>" + nightly[0] + "</a>";
 
             $('#merged_changes').append("<h4>" + nightly_link + "</h4>");
             nightly = nightlies.shift();
@@ -124,7 +124,7 @@ $(document).ready(function () {
 
     if ($.cookie('cm-nightlies')) { $("#hide_them").attr("checked", true); }
 
-    var nightlies = "http://mirror.teamdouche.net/"
+    var nightlies = "http://mirror.cyanogenmod.com/"
     var changelog = "/changelog/"
 
     $.get(changelog, {device: device}, parse_changelog);
