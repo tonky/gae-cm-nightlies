@@ -20,7 +20,7 @@ class Rss(webapp.RequestHandler):
 
         nightlies = []
 
-        conn = httplib.HTTPConnection("mirror.teamdouche.net")
+        conn = httplib.HTTPConnection("download.cyanogenmod.com")
         conn.request("GET", "/?device=%s" % device)
 
         html = conn.getresponse().read()

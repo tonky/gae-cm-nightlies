@@ -39,7 +39,7 @@ device_specific = {
     "inc": ["htc-kernel-incrediblec", "android_device_htc_inc"],
     "legend": ["android_device_htc_legend"],
     "liberty": ["android_device_htc_liberty"],
-    "morrison": ["android_device_motorola_morrison"],
+    # "morrison": ["android_device_motorola_morrison"],
     "one": ["android_device_geeksphone_one"],
     "heroc": ["android_device_htc_heroc"],
     "p990": ["android_device_lge_p990", "android_device_lge_star-common"],
