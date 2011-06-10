@@ -26,6 +26,10 @@ function main() {
 
     $('#merged_changes').empty();
 
+    if (nightly && (parse_date(merged[0].last_updated) > parse_date(nightly[1]))) {
+        $('#merged_changes').append("<h4>To be included in next nightly:</h4>");
+    }
+
     merged.forEach(function(e, i, a) {
         if(!nightly) { return; }
 
