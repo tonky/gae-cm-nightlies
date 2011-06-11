@@ -15,7 +15,7 @@ span { margin: 2px; float: left; width: 100%; }
 .translation a:link {color: #555}
 .translation a:visited {color: #555}
 
-h3 { font-size: 1.15em; text-align: center; padding: 20px 5px 5px 5px; color: #ccc; clear: both; }
+h3 { font-size: 1.15em; text-align: center; padding: 20px 5px 5px 5px; color: #555; clear: both; }
 h4 { font-size: 1.3em; text-align: center; padding: 40px 5px 5px 5px; color: #ccc; clear: both; }
 .error { font-size: 1.8em; color: #f00; }
 
