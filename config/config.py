@@ -50,7 +50,7 @@ device_specific = {
     "p990": ["android_device_lge_p990", "android_device_lge_star-common", "lge-kernel-star"],
     "p999": ["android_device_lge_p999", "android_device_lge_star-common", "lge-kernel-star"],
     "passion": ["android_device_htc_passion", "android_device_htc_passion-common", "cm-kernel"],
-	# "shadow": ["android_device_motorola_sholes"],
+	# "shadow": ["android_device_motorola_shadow"],
     "sholes": ["android_device_motorola_sholes"],
     "smb_a1002": ["android_device_malata_smb_a1002", "android_device_malata_smb-common"],
     "supersonic": ["htc-kernel-supersonic", "android_device_htc_supersonic"],
