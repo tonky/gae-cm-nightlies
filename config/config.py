@@ -47,6 +47,7 @@ device_specific = {
     "p999": ["android_device_lge_p999", "android_device_lge_star-common", "lge-kernel-star"],
     "passion": ["android_device_htc_passion", "android_device_htc_passion-common", "cm-kernel"],
     "sholes": ["android_device_motorola_sholes"],
+    "cdma_shadow": ["android_device_motorola_shadow"],
     "speedy": ["android_device_htc_speedy", "android_device_htc_msm7x30-common", "htc-kernel-msm7x30"],
     "supersonic": ["htc-kernel-supersonic", "cm-kernel", "android_device_htc_supersonic"],
     "vega": ["android_device_advent_vega"],
