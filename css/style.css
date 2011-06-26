@@ -10,6 +10,7 @@ span { margin: 2px; float: left; width: 100%; }
 .device { background-color: #2a2a2a; }
 .highlight { background-color: #555; }
 .hidden { display: none; }
+.nightly_date { font-size: 0.75em; color: #555; width: auto; float: none; }
 
 .translation { color: #456; }
 .translation a:link {color: #555}

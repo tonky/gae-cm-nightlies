@@ -37,7 +37,8 @@ function main() {
         cd = parse_date(e.last_updated)
 
         if (nd > cd) {
-            nightly_link = "<a href='http://mirror.cyanogenmod.com/?device="+ device +"' name='"+ nightly[0] +"'>" + nightly[0] + "</a>";
+            nightly_link = "<a href='http://mirror.cyanogenmod.com/?device="+ device +"' name='"+ nightly[0] +"'>" + nightly[0] + "</a>"+
+                " <span class='nightly_date'>("+nightly[1]+")</span>";
 
             $('#merged_changes').append("<h4>" + nightly_link + "</h4>");
             nightly = nightlies.shift();
