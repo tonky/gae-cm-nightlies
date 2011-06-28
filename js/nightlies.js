@@ -33,15 +33,17 @@ function main() {
     merged.forEach(function(e, i, a) {
         if(!nightly) { return; }
 
-        nd = parse_date(nightly[1])
-        cd = parse_date(e.last_updated)
+        var cd = parse_date(e.last_updated);
+        var nd = parse_date(nightly[1]);
 
-        if (nd > cd) {
+        while (cd < nd) {
             nightly_link = "<a href='http://mirror.cyanogenmod.com/?device="+ device +"' name='"+ nightly[0] +"'>" + nightly[0] + "</a>"+
                 " <span class='nightly_date'>("+nightly[1]+")</span>";
 
             $('#merged_changes').append("<h4>" + nightly_link + "</h4>");
             nightly = nightlies.shift();
+
+            nd = parse_date(nightly[1]);
         }
 
         var change = e.subject.link("http://review.cyanogenmod.com/" + e.id)
