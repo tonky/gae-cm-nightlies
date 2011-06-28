@@ -34,7 +34,7 @@ device_specific = {
     "espresso": ["android_device_htc_espresso", "htc-kernel-msm7227"],
     "galaxysmtd": ["android_device_samsung_galaxysmtd", "android_device_samsung_aries-common"],
     "glacier": ["android_device_htc_glacier", "android_device_htc_msm7x30-common", "htc-kernel-msm7x30"],
-    "harmony": ["android_device_harmony"],
+    "smb_a1002": ["android_device_malata_smb_a1002"],
     "hero": ["android_device_htc_hero"],
     "heroc": ["android_device_htc_heroc"],
     "inc": ["android_device_htc_inc", "cm-kernel", "htc-kernel-incrediblec"],
