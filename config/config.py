@@ -55,6 +55,7 @@ device_specific = {
     "vibrantmtd": ["android_device_samsung_vibrantmtd", "android_device_samsung_aries-common"],
     "vision": ["android_device_htc_vision", "android_device_htc_msm7x30-common", "htc-kernel-msm7x30"],
     "vivo": ["android_device_htc_vivo", "android_device_htc_msm7x30-common", "htc-kernel-msm7x30"],
+    "vivow": ["android_device_htc_vivow", "android_device_htc_msm7x30-common", "htc-kernel-msm7x30"],
     "z71": ["android_device_commtiva_z71"],
     "zeppelin": ["android_device_motorola_zeppelin"],
     "zero": ["android_device_geeksphone_zero", "geeksphone-kernel-zero"]
