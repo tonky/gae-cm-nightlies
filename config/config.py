@@ -34,6 +34,7 @@ device_specific = {
     "encore": ["android_device_bn_encore", "android_hardware_alsa_sound", "android_external_alsa-utils",
                "android_external_alsa-lib"],
     "espresso": ["android_device_htc_espresso", "htc-kernel-msm7227"],
+    "fascinatemtd": ["android_device_samsung_fascinatemtd", "android_device_samsung_aries-common"],
     "galaxys2": ["android_device_samsung_galaxys2"],
     "galaxysmtd": ["android_device_samsung_galaxysmtd", "android_device_samsung_aries-common"],
     "glacier": ["android_device_htc_glacier", "android_device_htc_msm7x30-common", "htc-kernel-msm7x30"],
