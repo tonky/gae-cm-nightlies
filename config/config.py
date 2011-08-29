@@ -28,6 +28,7 @@ device_specific = {
     "captivatemtd": ["android_device_samsung_captivatemtd", "android_device_samsung_aries-common"],
     "cdma_shadow": ["android_device_motorola_shadow", "android_device_motorola_common"],
     "cdma_droid2": ["android_device_motorola_droid2", "android_device_motorola_common"],
+    "cdma_droid2we": ["android_device_motorola_droid2we", "android_device_motorola_common"],
     "click": ["android_device_htc_click"],
     "crespo": ["android_device_samsung_crespo", "samsung-kernel-crespo"],
     "crespo4g": ["android_device_samsung_crespo4g", "samsung-kernel-crespo"],
