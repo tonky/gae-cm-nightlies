@@ -16,7 +16,7 @@ function parse_date(date_string) {
 
     var pd = date_string.match(/(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})/);
 
-    return new Date(pd[1], pd[2], pd[3], pd[4], pd[5], pd[6]);
+    return new Date(Date.UTC(pd[1], parseInt(pd[2]-1), pd[3], pd[4], pd[5], pd[6]));
 }
 
 function main() {
@@ -38,7 +38,7 @@ function main() {
 
         while (cd < nd) {
             nightly_link = "<a href='http://mirror.cyanogenmod.com/?device="+ device +"' name='"+ nightly[0] +"'>" + nightly[0] + "</a>"+
-                " <span class='nightly_date'>("+nightly[1]+")</span>";
+                " <span class='nightly_date'>("+ nd +")</span>";
 
             $('#merged_changes').append("<h4>" + nightly_link + "</h4>");
             nightly = nightlies.shift();
