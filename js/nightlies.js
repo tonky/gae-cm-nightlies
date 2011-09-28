@@ -36,13 +36,13 @@ function main() {
         var cd = parse_date(e.last_updated);
         var nd = parse_date(nightly[1]);
 
-        while (cd < nd) {
+        while (cd < nd && (nightlies.length > 0)) {
             nightly_link = "<a href='http://mirror.cyanogenmod.com/?device="+ device +"' name='"+ nightly[0] +"'>" + nightly[0] + "</a>"+
                 " <span class='nightly_date'>("+ nd +")</span>";
 
             $('#merged_changes').append("<h4>" + nightly_link + "</h4>");
-            nightly = nightlies.shift();
 
+            nightly = nightlies.shift();
             nd = parse_date(nightly[1]);
         }
 
