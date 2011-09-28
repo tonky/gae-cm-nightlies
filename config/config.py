@@ -45,6 +45,7 @@ device_specific = {
     "legend": ["android_device_htc_legend", "htc-kernel-msm7227"],
     "liberty": ["android_device_htc_liberty", "htc-kernel-msm7227"],
     "morrison": ["android_device_motorola_morrison"],
+    "motus": ["android_device_motorola_motus"],
     "one": ["android_device_geeksphone_one"],
     "p990": ["android_device_lge_p990", "android_device_lge_star-common", "lge-kernel-star"],
     "p999": ["android_device_lge_p999", "android_device_lge_star-common", "lge-kernel-star"],
