@@ -37,7 +37,7 @@ function main() {
         var nd = parse_date(nightly[1]);
 
         while (cd < nd && (nightlies.length > 0)) {
-            nightly_link = "<a href='http://mirror.cyanogenmod.com/?device="+ device +"' name='"+ nightly[0] +"'>" + nightly[0] + "</a>"+
+            nightly_link = "<a href='http://download.cyanogenmod.com/?device="+ device +"' name='"+ nightly[0] +"'>" + nightly[0] + "</a>"+
                 " <span class='nightly_date'>("+ nd +")</span>";
 
             $('#merged_changes').append("<h4>" + nightly_link + "</h4>");
