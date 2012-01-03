@@ -35,6 +35,7 @@ device_specific = {
     "crespo4g": ["android_device_samsung_crespo4g", "samsung-kernel-crespo"],
     "encore": ["android_device_bn_encore", "android_hardware_alsa_sound", "android_external_alsa-utils",
                "android_external_alsa-lib"],
+    "epicmtd": ["android_device_samsung_epicmtd", "android_kernel_samsung_victory"],
     "es209ra": ["android_device_semc_es209ra", "android_device_semc_msm7x27-common"],
     "espresso": ["android_device_htc_espresso", "htc-kernel-msm7227"],
     "fascinatemtd": ["android_device_samsung_fascinatemtd", "android_device_samsung_aries-common"],
