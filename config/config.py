@@ -57,6 +57,7 @@ device_specific = {
     "motus": ["android_device_motorola_motus"],
     "one": ["android_device_geeksphone_one"],
     "olympus": ["android_device_motorola_olympus"],
+    "p500" : ["android_device_lge_p500", "lge-kernel-msm7x27"],
     "p990": ["android_device_lge_p990", "android_device_lge_star-common", "lge-kernel-star"],
     "p999": ["android_device_lge_p999", "android_device_lge_star-common", "lge-kernel-star"],
     "passion": ["android_device_htc_passion", "android_device_htc_passion-common", "cm-kernel"],
