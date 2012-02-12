@@ -131,7 +131,7 @@ $(document).ready(function () {
 
     if ($.cookie('cm-nightlies')) { $("#hide_them").attr("checked", true); }
 
-    var nightlies = "http://mirror.cyanogenmod.com/"
+    var nightlies = "http://download.cyanogenmod.com/"
     var changelog = "/changelog/"
 
     $.get(changelog, {device: device}, parse_changelog);
