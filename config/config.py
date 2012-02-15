@@ -19,6 +19,8 @@ def qs_device(rh, device="ace"):
 
     return device
 
+# make sure "android_device_" repo goes first, as it's used in fronted to
+# generate manufacturer categories
 device_specific = {
     "ace": ["android_device_htc_ace", "android_device_htc_msm7x30-common", "htc-kernel-msm7x30"],
     "anzu": ["android_device_semc_anzu", "android_device_semc_mogami-common", 
@@ -27,12 +29,16 @@ device_specific = {
     "bravo": ["android_device_htc_bravo", "cm-kernel"],
     "bravoc": ["android_device_htc_bravoc", "cm-kernel"],
     "buzz": ["android_device_htc_buzz"],
+    "c660": ["android_device_lge_c660"],
     "captivatemtd": ["android_device_samsung_captivatemtd", "android_device_samsung_aries-common"],
     "cdma_shadow": ["android_device_motorola_shadow", "android_device_motorola_common"],
     "cdma_droid2": ["android_device_motorola_droid2", "android_device_motorola_common"],
     "click": ["android_device_htc_click"],
     "crespo": ["android_device_samsung_crespo", "samsung-kernel-crespo"],
     "crespo4g": ["android_device_samsung_crespo4g", "samsung-kernel-crespo"],
+    "e510": ["android_device_lge_e510"],
+    "e730": ["android_device_lge_e730", "android_device_lge_victor-common", "lge-kernel-msm7x30"],
+    "e739": ["android_device_lge_e739", "android_device_lge_victor-common", "lge-kernel-msm7x30"],
     "encore": ["android_device_bn_encore", "android_hardware_alsa_sound", "android_external_alsa-utils",
                "android_external_alsa-lib"],
     "epicmtd": ["android_device_samsung_epicmtd", "android_kernel_samsung_victory"],
@@ -58,6 +64,9 @@ device_specific = {
     "one": ["android_device_geeksphone_one"],
     "olympus": ["android_device_motorola_olympus"],
     "p500" : ["android_device_lge_p500", "lge-kernel-msm7x27"],
+    "p920": ["android_device_lge_p920"],
+    "p925": ["android_device_lge_p925"],
+    "p970": ["android_device_lge_p970"],
     "p990": ["android_device_lge_p990", "android_device_lge_star-common", "lge-kernel-star"],
     "p999": ["android_device_lge_p999", "android_device_lge_star-common", "lge-kernel-star"],
     "passion": ["android_device_htc_passion", "android_device_htc_passion-common", "cm-kernel"],
@@ -69,7 +78,7 @@ device_specific = {
     "smultron": ["android_device_semc_smultron", "android_device_semc_mogami-common", 
                "android_device_semc_msm7x30-common"],
     "speedy": ["android_device_htc_speedy", "android_device_htc_msm7x30-common", "htc-kernel-msm7x30"],
-    "supersonic": ["htc-kernel-supersonic", "cm-kernel", "android_device_htc_supersonic"],
+    "supersonic": [ "android_device_htc_supersonic", "htc-kernel-supersonic", "cm-kernel"],
     "umts_jordan": ["android_device_motorola_jordan"],
     "urushi": ["android_device_semc_urushi", "android_device_semc_mogami-common",
                "android_device_semc_msm7x30-common"],

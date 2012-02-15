@@ -1,12 +1,15 @@
 body { font-family: arial; background-color: #333; font-size: 18px; color: #369; padding: 15px; }
-span { margin: 2px; float: left; width: 100%; }
-#device_links span { width: auto; margin: 3px 6px 10px 6px; }
-#device_links span:hover { cursor: pointer; }
+span { margin: 2px; }
+.manufacturer { float: left; margin: 4px; }
+.manufacturer:hover { cursor: pointer; }
+ul { float: left; position: relative; top: 25px; margin-bottom: 35px; }
+li { padding: 2px 0; }
 
-.separator { clear: both; }
+.separator { clear: both; margin: 40px 5px 0px 5px; }
 
 #hide_translations { float: right; color: #666; }
 
+.block { display: block; }
 .device { background-color: #2a2a2a; }
 .highlight { background-color: #555; }
 .hidden { display: none; }

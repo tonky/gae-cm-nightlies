@@ -109,9 +109,20 @@ class MainPage(webapp.RequestHandler):
     def get(self):
         device = qs_device(self)
 
+        devices = {}
+        devices_tpl = []
+
+        for name, repos in device_specific.items():
+            manufacturer = repos[0].split("_")[2]
+            devices.setdefault(manufacturer, [])
+            devices[manufacturer].append(name)
+
+        for man, devices in devices.items():
+            devices_tpl.append({'manufacturer': man, 'device_list': sorted(devices)})
+
         path = os.path.join(os.path.dirname(__file__), 'index.html')
         self.response.out.write(template.render(path,
-            {'devices':sorted(device_specific.keys()), "for_device": device}))
+            {"for_device": device, 'devices': devices_tpl}))
 
 
 class Ajax(webapp.RequestHandler):

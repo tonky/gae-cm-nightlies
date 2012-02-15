@@ -14,10 +14,19 @@
   </head>
   <body>
       <div id="device_links">
-          {% for device in devices %}
-              <span><a href="/?device={{ device }}">{{ device|capfirst}}</a></span>
+          {% for item in devices|dictsort:"manufacturer" %}
+              <span class="manufacturer"><a>{{ item.manufacturer|capfirst}}</a></span>
+
+              <ul class="hidden" id="{{ item.manufacturer }}">
+                  {% for d in item.device_list %}
+                    <li>
+                      <span><a href="/?device={{ d }}">{{ d|capfirst}}</a></span>
+                    </li>
+                  {% endfor %}
+              </ul>
           {% endfor %}
       </div>
+
       <div id="hide_translations">
           <fieldset>
               <label for="hide_them">Hide translations?</label>
@@ -26,9 +35,6 @@
       </div>
 
       <hr class="separator" />
-
-      <p id="announcement_text">Ok, it's working for some people, and doesn't
-      work for others, i'll be looking into it, hang in there :)</p>
 
       <div id="merged_changes">Please wait, while loading changesets and nightlies...</div>
 

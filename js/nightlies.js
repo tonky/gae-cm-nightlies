@@ -49,7 +49,7 @@ function main() {
         var change = e.subject.link("http://review.cyanogenmod.com/" + e.id)
         change += " (" + e.project + ")"
 
-        $('#merged_changes').append("<span>" + change + "</span>");
+        $('#merged_changes').append("<span class='block'>" + change + "</span>");
     });
 
     $("span:contains('ranslat')").addClass("translation");
@@ -140,4 +140,12 @@ $(document).ready(function () {
     $("#hide_them").click(function() { trans_visibility(); });
 
     $("#announcement_header").click(function() { $("#announcement_text").toggleClass("hidden") ; });
+
+    $(".manufacturer").click(function() {
+        var was_hidden = $(this).next('ul').hasClass("hidden");
+
+        $('ul').addClass("hidden");
+
+        if (was_hidden) { $(this).next('ul').toggleClass("hidden"); }
+    });
 });
