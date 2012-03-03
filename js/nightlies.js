@@ -93,7 +93,7 @@ function parse_nightlies(data) {
     });
 
     if(nightlies.length == 0) {
-        return $('#merged_changes').text("Unable to parse nightlies, maybe cyanogenmod mirror is down. Please try a bit later.");
+        return $('#merged_changes').text("No cm9 nightlies or cyanogenmod mirror is down.");
     }
 
     main();

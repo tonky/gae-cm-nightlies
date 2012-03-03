@@ -114,6 +114,11 @@ class MainPage(webapp.RequestHandler):
 
         for name, repos in device_specific.items():
             manufacturer = repos[0].split("_")[2]
+
+            # fix the moto_ and motorola_ to be the same manufacturer
+            if manufacturer == "motorola":
+                manufacturer = "moto"
+
             devices.setdefault(manufacturer, [])
             devices[manufacturer].append(name)
 
