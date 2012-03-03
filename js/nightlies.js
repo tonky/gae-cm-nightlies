@@ -37,8 +37,7 @@ function main() {
         var nd = parse_date(nightly[1]);
 
         while (cd < nd && (nightlies.length > 0)) {
-            nightly_link = "<a href='http://download.cyanogenmod.com/?device="+ device +"' name='"+ nightly[0] +"'>" + nightly[0] + "</a>"+
-                " <span class='nightly_date'>("+ nd +")</span>";
+            nightly_link = "<a href='http://download.cyanogenmod.com/?device="+ device +"' name='"+ nightly[0] +"'>" + nightly[0] + "</a>";
 
             $('#merged_changes').append("<h4>" + nightly_link + "</h4>");
 
@@ -81,16 +80,16 @@ function parse_nightlies(data) {
         return $('#merged_changes').text("Yahoo API is down, please try about five minutes later.");
     }
 
-    nightlies_raw  = data.results[0].match(/[\s\S]*?\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/g);
+    nightlies_raw  = data.results[0].match(/update-[\s\S]*?\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/g);
 
     if (!nightlies_raw) {
         return $('#merged_changes').append("<h4 class='error'>Device not found. Maybe you misspelled the device name in the url, or device isn't supported yet. This is still WIP, i'll add all CM supported devices eventually. Please click a link in the header.</h1>");
     }
 
     nightlies_raw.forEach(function(e, i, a) {
-        var parsed = e.match(/([\w\d\._-]*?.zip)[\s\S]*?(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/);
+        var parsed = e.match(/(update\-cm\-9.*?\.zip)[\s\S]*?(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/);
 
-        nightlies.push([parsed[1], parsed[2]]);
+        if (parsed) { nightlies.push([parsed[1], parsed[2]]); }
     });
 
     if(nightlies.length == 0) {

@@ -1,1 +1,1 @@
-/opt/google_appengine/dev_appserver.py .
+/opt/google-appengine-python/dev_appserver.py .

@@ -84,7 +84,7 @@ class ReviewsCron(webapp.RequestHandler):
 
         change_proxy = proxy.ServerProxy('http://review.cyanogenmod.com/gerrit/rpc/ChangeListService')
         # changes = change_proxy.allQueryNext("status:merged","z",amount)['changes']
-        changes = change_proxy.allQueryNext("status:merged branch:gingerbread","z",amount)['changes']
+        changes = change_proxy.allQueryNext("status:merged branch:ics","z",amount)['changes']
 
 
         known_ids = self._known_ids()
