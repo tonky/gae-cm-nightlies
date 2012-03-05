@@ -83,7 +83,7 @@ function parse_nightlies(data) {
     nightlies_raw  = data.results[0].match(/update-[\s\S]*?\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/g);
 
     if (!nightlies_raw) {
-        return $('#merged_changes').append("<h4 class='error'>Device not found. Maybe you misspelled the device name in the url, or device isn't supported yet. This is still WIP, i'll add all CM supported devices eventually. Please click a link in the header.</h1>");
+        return $('#merged_changes').append("<h4 class='error'>No nightlies for this device or cm site is down.</h1>");
     }
 
     nightlies_raw.forEach(function(e, i, a) {
