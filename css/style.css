@@ -1,35 +1,51 @@
-body { font-family: arial; background-color: #333; font-size: 18px; color: #369; padding: 15px; }
-span { margin: 2px; }
-.manufacturer { float: left; margin: 4px; }
+body { font-family: arial; background-color: #333; font-size: 18px; color: #369; padding: 15px; margin: 0 5px 5px 5px; }
+.manufacturer { float: left; padding-right: 5px; margin: 4px 4px 4px 0; }
 .manufacturer:hover { cursor: pointer; }
-ul { float: left; position: relative; top: 25px; margin-bottom: 35px; }
+#nav_unknown {padding-left: 10px;}
+#device_links ul { float: left; position: relative; top: 25px; margin-bottom: 35px; }
 li { padding: 2px 0; }
 
-.separator { clear: both; margin: 40px 5px 0px 5px; }
+.separator { clear: both; color: #AAA; border: 1px solid; margin: 30px 0px 0px 0px; }
 
-#hide_translations { float: right; color: #666; }
+#select_options { float: right; color: #666; margin: 4px 0px 4px 4px; }
+#select_options fieldset { display: inline-block; }
+#select_options input { margin-right: 0px; }
+#select_options .sep { display: inline-block; vertical-align: bottom; color: #AAA; height: 16px; border: solid #AAA 1px; margin: 0px 5px;};
 
+.lastUpdt { display: inline-block; width: 150px; }
+.commitDesc { display: inline-block; }
 .block { display: block; }
 .device { background-color: #2a2a2a; }
 .highlight { background-color: #555; }
 .hidden { display: none; }
 .nightly_date { font-size: 0.75em; color: #555; width: auto; float: none; }
 
+td { padding: 2px 0; } 
+.tMerge { width: 100%; }
+.tDate  { width: 152px; min-width: 152px; }
+.tDesc  { width: auto; }
+.tProject { width: 370px; min-width: 370px; }
+
 .translation { color: #456; }
 .translation a:link {color: #555}
 .translation a:visited {color: #555}
 
-h3 { font-size: 1.15em; text-align: center; padding: 20px 5px 5px 5px; color: #555; clear: both; }
-h4 { font-size: 1.3em; text-align: center; padding: 40px 5px 5px 5px; color: #ccc; clear: both; }
-.error { font-size: 1.8em; color: #f00; }
+h1 { font-size: 1.15em; padding: 20px 0px 5px 0px; clear: both; }
+h2 { font-size: 1.15em; padding: 20px 0px 5px 0px; clear: both; }
+h3 { font-size: 1.15em; text-align: center; padding: 20px 0px 5px 0px; color: #555; clear: both; }
+h4 { font-size: 1.3em; text-align: center; padding: 40px 0px 5px 0px; color: #ccc; clear: both; }
+.error { font-size: 1.2em; color: #f00; padding: 10px; }
 
-#footer { float: left; width: 100%; margin: 20px 0 0 0; text-align: center; font-size: 0.8em; color: #555; }
+#footer { float: left; line-height: 16px; width: 100%; margin: 20px 0 5px 0; text-align: center; font-size: 0.8em; color: #555; }
+#footer a img {vertical-align: bottom;}
 
-#footer a:link {text-decoration: none; color: #444}
+#footer a:link {text-decoration: none; color: #444; }
 #footer a:visited {text-decoration: none; color: #444; }
 
+.info_text { font-size: 1em; margin: 5px 0; padding: 5px 0; color: #369; width: 100%; text-align: center; }
+
 #announcement_header { font-size: 0.7em; margin: 5px 0; color: #f66; width: 100%; text-align: center; }
-#announcement_text { font-size: 0.7em; color: #f66; width: 100%; text-align: center; }
+#announcement_text   { font-size: 0.7em; color: #f66; width: 100%; text-align: center; }
 
 #announcement_header:hover { cursor: pointer; }
 

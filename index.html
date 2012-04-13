@@ -4,7 +4,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>CyanogenMod nightlies changelog for {{ for_device|capfirst }}</title>
     <link rel="alternate" type="application/rss+xml"
-          href="/rss?device={{ for_device }}" title="{{ for_device|capfirst }} nightlies RSS feed">
+          href="/rss?device={{ for_device }}&branch={{ for_branch }}" title="{{ for_device|capfirst }} builds as RSS feed">
     <link rel="stylesheet" type="text/css" href="/css/reset.css" />
     <link rel="stylesheet" type="text/css" href="/css/style.css" />
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js" type="text/javascript"></script>
@@ -14,27 +14,47 @@
   </head>
   <body>
       <div id="device_links">
-          {% for item in devices|dictsort:"manufacturer" %}
-              <span class="manufacturer"><a>{{ item.manufacturer|capfirst}}</a></span>
+          {% for manufacturer in devices.nav_list %}
+              <span class="manufacturer" id="nav_{{ manufacturer.name }}"><a>{{ manufacturer.name|capfirst }}</a></span>
 
-              <ul class="hidden" id="{{ item.manufacturer }}">
-                  {% for d in item.device_list %}
+              <ul class="hidden" id="{{ manufacturer.name }}">
+                  {% for device in manufacturer.dev_list %}
                     <li>
-                      <span><a href="/?device={{ d }}">{{ d|capfirst}}</a></span>
+                      <span><a href="/?device={{ device.name }}&branch={{ device.branch }}">{{ device.name|capfirst }}</a></span>
                     </li>
                   {% endfor %}
               </ul>
           {% endfor %}
+          
       </div>
 
-      <div id="hide_translations">
-          <fieldset>
-              <label for="hide_them">Hide translations?</label>
-              <input type="checkbox" id="hide_them" />
-          </fieldset>
+      <div id="select_options">
+          <form action="">
+              <fieldset>
+                  <label for="current_device">Device:</label>
+                  <span id="current_device"></span>
+              </fieldset><span class="sep"></span><fieldset>
+                  <label>Branch:</label>
+                  {% for branch in branches %}
+                      <input type="radio" id="branch_{{ branch }}" class="select_branch" name="branch" value="{{ branch }}"> {{ branch }}</input>
+                  {% endfor %}
+                  
+              </fieldset><span class="sep"></span><fieldset>
+                  <label>Hide type:</label>
+                  <input type="checkbox" id="hide_type_kang"   > KANG</input>
+                  <input type="checkbox" id="hide_type_nightly"> nightly</input>
+                  <input type="checkbox" id="hide_type_rc"     > RC</input>
+                  <input type="checkbox" id="hide_type_stable" > stable</input>
+              </fieldset><span class="sep"></span><fieldset>
+                  <label for="hide_them">Hide translations?</label>
+                  <input type="checkbox" id="hide_them" />
+              </fieldset>
+          </form>
       </div>
 
       <hr class="separator" />
+
+      <div id="info_text" class="info_text"></div>
 
       <div id="announcement_header"></div>
       <div id="announcement_text"></div>
@@ -42,11 +62,11 @@
       <div id="merged_changes">Please wait, while loading changesets and nightlies...</div>
 
       <div id="footer">
-          (c) <a href='mailto:gtonky@gmail.com'>Igor Tonkopryadchenko aka TonKy</a> aka xda:igor.tonky.
+          &copy; <a href='mailto:gtonky@gmail.com'>Igor Tonkopryadchenko aka TonKy</a> aka xda:igor.tonky.
           <a href="https://github.com/tonky/gae-cm-nightlies">github source </a>.
-          <a href="http://cm-7-nightlies.appspot.com/?device=motus">cm7 nightlies</a>
-          Feedback is welcome. 
-          <a class="rss" type="application/rss+xml" href="/rss?device={{ for_device }}"><img src="/img/rss.gif"></a>
+          <a href="http://cm-7-nightlies.appspot.com/?device={{ for_device }}">cm7 nightlies</a>
+          Feedback is welcome. (KANG-ext. by <a href="http://www.awalon.de/">Awalon</a>)
+          <a id="rss_ref" class="rss" type="application/rss+xml" href="/rss?device={{ for_device }}&amp;branch={{ for_branch }}"><img alt="rss" src="/img/rss.gif"></a>
       </div>
   </body>
 </html>

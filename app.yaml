@@ -1,5 +1,5 @@
-application: cm-nightlies
-version: 8
+application: cm-kang
+version: 12
 runtime: python
 api_version: 1
 
@@ -17,7 +17,11 @@ handlers:
   static_dir: js
 
 - url: /rss
-  script: rss.py
+  script: diff.py
 
+- url: /favicon\.ico
+  static_files: favicon.ico
+  upload: favicon\.ico
+  
 - url: /.*
   script: diff.py

@@ -9,15 +9,37 @@ class Change(db.Model):
     project = db.StringProperty()
     subject = db.StringProperty()
     last_updated = db.StringProperty()
+    branch = db.StringProperty()
 
+def qs_branch(rh, branch="gingerbread"):
+    qd = rh.request.get('branch')
+    if qd and qd in branch_device.keys():
+        branch = qd
+    return branch
 
 def qs_device(rh, device="ace"):
     qd = rh.request.get('device')
-
     if qd and qd in device_specific.keys():
         device = qd
-
     return device
+
+def qs_kang_name(rh, kang="ace-weik"):
+    kang = rh.request.get('kang')
+    return kang
+
+def qs_kang_id(rh, kangId=""):
+    kangId = rh.request.get('kangId')
+    return kangId
+
+use_kang_extension = True
+#use_kang_extension = False
+
+allow_db_clear = False
+
+branch_device = {
+    "gingerbread": ["ace", "galaxys2att"],
+    "ics": ["tf101", "tf201", "galaxys2", "i777", "galaxysmtd", "toro"]
+}
 
 # make sure "android_device_" repo goes first, as it's used in fronted to
 # generate manufacturer categories
@@ -46,7 +68,8 @@ device_specific = {
     "espresso": ["android_device_htc_espresso", "htc-kernel-msm7227"],
     "fascinatemtd": ["android_device_samsung_fascinatemtd", "android_device_samsung_aries-common"],
     "galaxys2": ["android_device_samsung_galaxys2", "android_device_samsung_c1-common"],
-    "galaxys2att": ["android_device_samsung_galaxys2att", "android_device_samsung_c1-common"],
+    "galaxys2att": ["android_device_samsung_galaxys2att", "android_device_samsung_c1-common", "android_device_samsung_i777", "android_device_samsung_galaxys2"],
+    "i777": ["android_device_samsung_galaxys2att", "android_device_samsung_c1-common", "android_device_samsung_i777", "android_device_samsung_galaxys2"],
     "galaxysmtd": ["android_device_samsung_galaxysmtd", "android_device_samsung_aries-common"],
     "glacier": ["android_device_htc_glacier", "android_device_htc_msm7x30-common", "htc-kernel-msm7x30"],
     "hallon": ["android_device_semc_hallon", "android_device_semc_mogami-common", 
@@ -82,6 +105,8 @@ device_specific = {
     "speedy": ["android_device_htc_speedy", "android_device_htc_msm7x30-common", "htc-kernel-msm7x30"],
     "supersonic": [ "android_device_htc_supersonic", "htc-kernel-supersonic", "cm-kernel"],
     "toro": ["android_device_samsung_toro"],
+    "tf101": ["android_device_asus_tf101"],
+    "tf201": ["android_device_asus_tf201"],
     "umts_jordan": ["android_device_motorola_jordan"],
     "urushi": ["android_device_semc_urushi", "android_device_semc_mogami-common",
                "android_device_semc_msm7x30-common"],

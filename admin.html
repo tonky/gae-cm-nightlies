@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>CyanogenMod nightlies changelog for {{ for_device|capfirst }}</title>
+    <link rel="alternate" type="application/rss+xml"
+          href="/rss?device={{ for_device }}&branch={{ for_branch }}" title="{{ for_device|capfirst }} nightlies RSS feed">
+    <link rel="stylesheet" type="text/css" href="/css/reset.css" />
+    <link rel="stylesheet" type="text/css" href="/css/style.css" />
+  </head>
+  <body>
+	<h1>Admin</h1>
+	<ul>
+		<li><a href="/">Changelog</a></li>
+		<li><a href="/rss?device=ace&branch">RSS feed with CM builds by device and branch</a></li>
+		<li><a href="/pull_reviews/">Pull reviews</a> (collecting changes from <a href="http://review.cyanogenmod.com/">CM Gerrit</a>)</li>
+		<li><a href="/changelog/">Changelog (JSON)</a></li>
+		<li><a href="/get_builds/">CM: Builds (JSON)</a></li>
+		<li><a href="/get_devices/">CM: Devices (JSON)</a></li>
+		<li><a href="/test/">Test</a></li>
+		<li><a href="/flush/">Flush cache</a></li>
+	</ul>
+	<h2>KANG extension (alpha)</h2>
+	<p>Controlled by config.py: use_kang_extension</p>
+	<ul>
+		<li><a href="/changes_available/?branch=gingerbread&kang=crematoria">Changes available</a></li>
+		<li><a href="/changes_available_dev/?branch=gingerbread&device=ace&kang=crematoria">Changes available (for device)</a></li>
+		<li><a href="/new_kang/?kang=MyTestKang">New KANG</a></li>
+		<li><a href="/remove_kang/?kang=MyTestKang&kangId=-0815">Remove KANG</a></li>
+		<li><a href="/rename_kang/?kang=MyTestKang%20New%20NAME&kangId=-0815">Rename KANG</a></li>
+	</ul>
+	<h2>Database</h2>
+	<ul>
+		<li><a href="/show_db/">Show database content</a></li>
+		<li><a href="/rm_duplicate/">Remove duplicates; Migrate data</a></li>
+		<li><a href="/clear_db/">Clear database (controlled by config.py: allow_db_clear)</a></li>
+	</ul>
+  </body>
+</html>

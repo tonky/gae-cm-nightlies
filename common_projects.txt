@@ -3,6 +3,7 @@ android_dalvik
 android_development
 android_external_bash
 android_external_bluetooth_bluez
+android_external_bootmenu
 android_external_busybox
 android_external_clearsilver
 android_external_compcache
@@ -98,3 +99,4 @@ android_system_netd
 android_system_vold
 android_system_wlan_ti
 android_vendor_cyanogen
+android_vendor_cm
