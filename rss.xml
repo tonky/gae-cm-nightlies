@@ -1,17 +1,26 @@
 <?xml version="1.0"?>
-<rss version="2.0">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <ttl>10</ttl>
-    <title>CM {{ device }} nightlies</title>
+    <title>CM {{ branch }} builds: {{ device|capfirst }}</title>
     <language>en-us</language>
-    <webMaster>gtonky@gmail.com</webMaster>
-    <lastBuildDate>{{ changes.0.1|date:"r" }}</lastBuildDate>
-    <link>http://cm-nightlies.appspot.com/?device={{ device }}</link>
-    {% for name, date in changes %}
+    <webMaster>webmaster@weik-net.com (Weik-Net)</webMaster>
+    <lastBuildDate>{{ builds.0.3|date:"r" }}</lastBuildDate>
+    <pubDate>{{ now|date:"r" }}</pubDate>
+    <docs>http://cyber.law.harvard.edu/rss/rss.html</docs>
+    <link>http://cm-kang.appspot.com/?device={{ device }}&amp;branch={{ branch }}</link>
+    <atom:link href="http://cm-kang.appspot.com/rss?device={{ device }}&amp;branch={{ branch }}" rel="self" type="application/rss+xml" />
+    <description>List of CM builds for {{ device|capfirst }}</description>
+    {% for name, date, btype, utc_date, changes in builds %}
     <item>
        <title>{{ name }}</title>
-       <link>http://cm-nightlies.appspot.com/?device={{ device }}#{{ name }}</link>
-       <pubDate>{{ date|date:"r" }}</pubDate>
+       <link>http://cm-kang.appspot.com/?device={{ device }}&amp;branch={{ branch }}#{{ name }}</link>
+       <guid>http://cm-kang.appspot.com/?device={{ device }}&amp;branch={{ branch }}#{{ name }}</guid>
+       <description>&lt;p&gt;{{ date }}: {{ btype }}&lt;/p&gt;
+{% for change in changes %}
+&lt;p&gt;{{ change }}&lt;/p&gt;{% endfor %}
+       </description>
+       <pubDate>{{ utc_date|date:"r" }}</pubDate>
     </item>
     {% endfor %}
   </channel>

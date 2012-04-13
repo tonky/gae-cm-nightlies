@@ -1,4 +1,4 @@
 cron:
 - description: check merged reviews
   url: /pull_reviews/
-  schedule: every 10 minutes
+  schedule: every 15 minutes
