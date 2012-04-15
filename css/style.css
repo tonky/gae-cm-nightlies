@@ -33,6 +33,6 @@ h4 { font-size: 1.3em; text-align: center; padding: 40px 5px 5px 5px; color: #cc
 
 #announcement_header:hover { cursor: pointer; }
 
-a:link {text-decoration: none; color: #AAA}
-a:visited {text-decoration: none; color: #AAA; }
+a:link {text-decoration: none; color: #ccc}
+a:visited {text-decoration: none; color: #666; }
 a:hover {text-decoration: underline; }
