@@ -1,4 +1,4 @@
-body { font-family: arial; background-color: #333; font-size: 18px; color: #369; padding: 15px; }
+body { font-family: arial; background-color: #222; font-size: 18px; color: #69c; padding: 15px; }
 span { margin: 2px; }
 .manufacturer { float: left; margin: 4px; }
 .manufacturer:hover { cursor: pointer; }
