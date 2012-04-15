@@ -129,7 +129,12 @@ class MainPage(webapp.RequestHandler):
         self.response.out.write(template.render(path,
             {"for_device": device, 'devices': devices_tpl}))
 
-
+class Devices(webapp.RequestHandler):
+    def get(self):
+        
+        self.response.headers['Content-Type'] = 'application/json'
+        self.response.out.write(json.dumps(device_specific.keys()))
+        
 class Ajax(webapp.RequestHandler):
     def common_projects(self):
         common = memcache.get('common_projects')
@@ -169,13 +174,14 @@ class Ajax(webapp.RequestHandler):
     def get(self):
         device = qs_device(self)
 
-        self.response.headers['Content-Type'] = 'text/json'
+        self.response.headers['Content-Type'] = 'application/json'
         self.response.out.write(json.dumps(self.filter(device)))
 
 
 application = webapp.WSGIApplication(
                                      [('/', MainPage), ('/changelog/', Ajax),
                                          ('/pull_reviews/', ReviewsCron),
+                                         ('/devices/', Devices),
                                          ('/test', Test)],
                                      debug=True)
 
