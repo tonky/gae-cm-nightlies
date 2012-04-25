@@ -67,6 +67,8 @@ device_specific = {
     "motus": ["android_device_motorola_motus"],
     "one": ["android_device_geeksphone_one"],
     "olympus": ["android_device_motorola_olympus"],
+    "p1": ["android_device_samsung_p1", "android_device_samsung_p1-common", "android_kernel_samsung_p1"],
+    "p1c": ["android_device_samsung_p1c", "android_device_samsung_p1-common", "android_kernel_samsung_galaxytab-cdma"],
     "p500" : ["android_device_lge_p500", "lge-kernel-msm7x27"],
     "p920": ["android_device_lge_p920"],
     "p925": ["android_device_lge_p925"],
