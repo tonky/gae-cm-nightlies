@@ -25,7 +25,7 @@ device_specific = {
     "ace": ["android_device_htc_ace", "android_device_htc_msm7x30-common", "htc-kernel-msm7x30"],
     "anzu": ["android_device_semc_anzu", "android_device_semc_mogami-common", 
                "android_device_semc_msm7x30-common"],
-    "blade": ["android_device_zte_blade"],
+    "blade": ["android_device_zte_blade", "android_kernel_samsung_smdk4210"],
     "bravo": ["android_device_htc_bravo", "cm-kernel"],
     "bravoc": ["android_device_htc_bravoc", "cm-kernel"],
     "buzz": ["android_device_htc_buzz"],
