@@ -22,6 +22,18 @@ handlers:
 - url: /favicon\.ico
   static_files: favicon.ico
   upload: favicon\.ico
+
+- url: /apple-touch-icon\.png
+  static_files: apple-touch-icon.png
+  upload: apple-touch-icon\.png
+  
+- url: /google(.*?)\.html
+  static_files: google\1.html
+  upload: google(.*?)\.html
+  
+- url: /robots\.txt
+  static_files: robots.txt
+  upload: robots\.txt
   
 - url: /.*
   script: diff.py

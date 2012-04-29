@@ -8,8 +8,9 @@ with google appengine.
 this is it :) it lives at http://cm-nightlies.appspot.com (original from TonKy)
 (git://github.com/tonky/gae-cm-nightlies.git)
 
-Fork with experimental KANG/UNOFFICIAL support from Awalon lives at http://cm-kang.appspot.com/
-(git://github.com/awalon/gae-cm-nightlies.git)
+Forked by Awalon as git://github.com/awalon/gae-cm-nightlies.git
+- CM:   gingerbread and ice cream sandwich  (aka ICS): http://cm-kang.appspot.com/
+- AOPK: http://aokp-log.appspot.com/
 
 feedback is welcome.
 

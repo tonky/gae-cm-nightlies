@@ -2,6 +2,7 @@
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="robots" content="noindex, nofollow">
     <title>CyanogenMod nightlies changelog for {{ for_device|capfirst }}</title>
     <link rel="alternate" type="application/rss+xml"
           href="/rss?device={{ for_device }}&branch={{ for_branch }}" title="{{ for_device|capfirst }} nightlies RSS feed">
@@ -31,6 +32,8 @@
 	</ul>
 	<h2>Database</h2>
 	<ul>
+		<li><a href="/show_projects/">Show projects</a></li>
+		<li><a href="/show_common_projects/">Show common projects</a></li>
 		<li><a href="/show_db/">Show database content</a></li>
 		<li><a href="/rm_duplicate/">Remove duplicates; Migrate data</a></li>
 		<li><a href="/clear_db/">Clear database (controlled by config.py: allow_db_clear)</a></li>
