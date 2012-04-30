@@ -526,10 +526,12 @@ class RssFeed(webapp.RequestHandler):
         
         build_branch  = CustomRomBuilds().getBuilds(device, False)
         builds        = build_branch[branch]
+        if len(builds) == 0: return
         changes       = Ajax().filter(device, branch)
         build_stack   = sorted (builds, key=itemgetter(3), reverse=False)
         c_build       = build_stack.pop()
-        n_build       = build_stack.pop()
+        n_build       = None
+        if len(build_stack) > 0: n_build = build_stack.pop()
         for c in changes:
             if c['project'] == 'KANG': continue
             
@@ -540,9 +542,10 @@ class RssFeed(webapp.RequestHandler):
             build_no = None
             if custom_rom == 'aokp': build_no = re.search (r"build.*?(\d+)", c['subject'])
             
-            while c_date < n_build[3] or (custom_rom == 'aokp' and build_no and ('-'+build_no.group(1)+'.zip') in c['subject']):
-                c_build = n_build
-                n_build = build_stack.pop()
+            if n_build is not None:
+                while c_date < n_build[3] or (custom_rom == 'aokp' and build_no and ('-'+build_no.group(1)+'.zip') in c['subject']):
+                    c_build = n_build
+                    n_build = build_stack.pop()
                 
             if len(c_build) < 5: c_build.append([])
             c_build[4].append((c['subject']+" ("+c['project']+")"))
