@@ -3,22 +3,23 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="robots" content="noindex, nofollow">
-    <title>CyanogenMod nightlies changelog for {{ for_device|capfirst }}</title>
+    <title>{{ custom_rom|upper }} changelog for {{ device|capfirst }} - admin page</title>
     <link rel="alternate" type="application/rss+xml"
-          href="/rss?device={{ for_device }}&branch={{ for_branch }}" title="{{ for_device|capfirst }} nightlies RSS feed">
+          href="/rss/{{ device }}/{{ branch }}" title="{{ device|capfirst }} nightlies RSS feed">
     <link rel="stylesheet" type="text/css" href="/css/reset.css" />
     <link rel="stylesheet" type="text/css" href="/css/style.css" />
   </head>
   <body>
+	{{ greeting|safe }}
 	<h1>Admin</h1>
 	<ul>
 		<li><a href="/">Changelog</a></li>
-		<li><a href="/rss?device=ace&branch">RSS feed with CM builds by device and branch</a></li>
-		<li><a href="/pull_reviews/">Pull reviews</a> (collecting changes from <a href="http://review.cyanogenmod.com/">CM Gerrit</a>)</li>
+		<li><a href="/rss?device=ace&branch">RSS feed with {{ custom_rom|upper }} builds by device and branch</a></li>
+		<li><a href="/pull_reviews/?amount=500">Pull reviews</a> (collecting changes from <a href="{{ gerrit_url }}">{{ custom_rom|upper }} Gerrit</a>)</li>
 		<li><a href="/changelog/">Changelog (JSON)</a></li>
-		<li><a href="/get_builds/">CM: Builds (JSON)</a></li>
-		<li><a href="/get_devices/">CM: Devices (JSON)</a></li>
-		<li><a href="/test/">Test</a></li>
+		<li><a href="/get_builds/">{{ custom_rom|upper }}: Builds (JSON)</a></li>
+		<li><a href="/get_devices/">{{ custom_rom|upper }}: Devices (JSON)</a></li>
+		<li><a href="/test">Test</a></li>
 		<li><a href="/flush/">Flush cache</a></li>
 	</ul>
 	<h2>KANG extension (alpha)</h2>
@@ -35,6 +36,7 @@
 		<li><a href="/show_projects/">Show projects</a></li>
 		<li><a href="/show_common_projects/">Show common projects</a></li>
 		<li><a href="/show_db/">Show database content</a></li>
+		<li><a href="/load_project/">Load project table</a></li>
 		<li><a href="/rm_duplicate/">Remove duplicates; Migrate data</a></li>
 		<li><a href="/clear_db/">Clear database (controlled by config.py: allow_db_clear)</a></li>
 	</ul>

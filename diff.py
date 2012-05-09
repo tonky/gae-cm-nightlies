@@ -1,7 +1,9 @@
 from config.config import (ga_tracking_id, custom_rom, build_url, gerrit_url, gerrit_time_offset,
     use_kang_extension, build_dev_list_regex, build_dev_regex, build_list_regex, build_regex,
-    allow_db_clear, branch_device, device_title, device_specific, Change, qs_branch, qs_device,
-    qs_kang_name, qs_kang_id, keywords, branches, types)
+    allow_db_clear, branch_device, device_title, device_specific, qs_branch, qs_device,
+    qs_kang_name, qs_kang_id, keywords, branches, types,
+    query_max, cache_device_timeout, cache_build_timeout, cache_rss_merge_timeout,
+    Project, Change, User)
 
 import logging
 import os
@@ -17,14 +19,17 @@ from django.utils import simplejson as json
 from google.appengine.api import memcache
 from google.appengine.ext import db
 from google.appengine.ext import webapp
+from google.appengine.api import users
+from google.appengine.api import oauth
 from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import run_wsgi_app
+from google.appengine.runtime import DeadlineExceededError
 
 
 def get_tzd():
 	tzd = memcache.get('tzd')
 	if tzd is not None:
-		# logging.debug("-----------> device project cache hit")
+		# logging.debug("-----------> time zone cache hit")
 		return tzd
 	
 	tzd = {}
@@ -83,7 +88,7 @@ def parse_timestamp(timestamp):
 		tzd = get_tzd()
 		dt = datetime.strptime(m.group(1), "%Y-%m-%d %H:%M:%S")
 		if m.lastindex >=2 and tzd[m.group(2)]:
-			dt = dt + timedelta(hours=tzd[m.group(2)])
+			dt = dt - timedelta(hours=tzd[m.group(2)])
 	else:
 		dt = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
 	return dt
@@ -105,6 +110,64 @@ def is_subset(a, b):
     return True
 
 
+def is_not_device_specific(subject):
+    dev_list = CustomRomDevices().getDevices()['dev_sort']
+    for dev in dev_list:
+      if re.search(r'\b%s\b' % dev, subject, re.IGNORECASE):
+        return False
+    
+    return True
+
+
+def project_type(project):
+    dev_p = CustomRomDevices().getDevices()['projects']
+    if (
+          project in dev_p
+          or 'android_device_' in project
+          or 'vendor_' in project
+          or 'device_' in project
+          or 'android_hardware_' in project
+          or 'android_kernel_' in project
+          or '-kernel-' in project
+        ):
+        return 'device'
+    else:
+        return 'common'
+
+
+def project(branch, type, force=False):
+    cache_ns = type+"-"+branch
+    p_list = memcache.get('project', cache_ns)
+    
+    if not force and p_list is not None:
+        return p_list
+    
+    memcache.delete('project-list')
+    if type == '--all--':
+        p_list = Project.gql("WHERE branch = :1 ORDER BY type, project", branch)
+    else:
+        p_list = Project.gql("WHERE branch = :1 AND type = :2 ORDER BY project", branch, type)
+    
+    memcache.set('project', p_list, namespace=cache_ns)
+    return p_list
+
+
+def project_list(branch, type):
+    cache_ns = type+"-"+branch
+    p_list = memcache.get('project-list', cache_ns)
+    
+    if p_list is not None:
+        return p_list
+
+    p_rows = project(branch, type)
+    p_list = []
+    for p in p_rows:
+        p_list.append(p.project)
+    
+    memcache.set('project-list', p_list, namespace=cache_ns)
+    return p_list
+
+
 def last_changes(branch):
     if branch == 'None' or branch == '' or branch is None:
         branch = 'gingerbread'
@@ -114,14 +177,11 @@ def last_changes(branch):
         # logging.debug("-----------> last changes cache hit")
         return last_changes
     
-    
-    #q = db.GqlQuery("SELECT * FROM Change WHERE branch = :1 ORDER BY last_updated DESC", branch)
     if branch == '--all--':
-        q = Change.gql("ORDER BY last_updated DESC")
+        last_changes = Change.gql("ORDER BY last_updated DESC")
     else:
         q = Change.gql("WHERE branch = :branch ORDER BY last_updated DESC", branch=branch)
-        
-    last_changes = q.fetch(400)
+        last_changes = q.fetch(query_max+100)
     
     memcache.set('last_changes', last_changes, namespace=branch)
     return last_changes
@@ -134,16 +194,12 @@ def device_projects():
         # logging.debug("-----------> device project cache hit")
         return projects
     
-    q = db.GqlQuery("SELECT * FROM Change ORDER BY project")
-    all_projects = q.fetch(400)
+    all_projects = Project.gql("WHERE type = 'device'")
     
-    seen = {}
     projects = []
-    for c in all_projects:
-        if c.project in seen: continue
-        if not re.search(r'^(android_)?device_', c.project): continue
-        projects.append(c.project)
-        seen[c.project] = 1
+    for p in all_projects:
+        if not re.search(r'^(android_)?device_', p.project): continue
+        projects.append(p.project)
     
     memcache.set('device-projects', projects)
     return projects
@@ -153,22 +209,22 @@ class ShowDb(webapp.RequestHandler):
     def get(self):
         branch = qs_branch(self)
         device = qs_device(self)
-        self.response.headers['Content-Type'] = 'text/html'
+        self.response.headers['Content-Type'] = 'text/html; charset=UTF-8'
         
         if self.request.get('filter') and self.request.get('filter') == "1":
              q = Change.gql("WHERE branch = :branch ORDER BY last_updated DESC", branch=branch)
         else:
-             q = db.GqlQuery("SELECT * FROM Change ORDER BY last_updated, id")
-        ch = q.fetch(500)
+             q = db.GqlQuery("SELECT * FROM Change ORDER BY last_updated DESC, id")
+        ch = q.fetch(2000)
         
         self.response.out.write("<table>")
         self.response.out.write("<thead><tr><td>branch</td><td>id</td><td>subject</td><td>project</td><td>last_updated</td></tr></thead><tbody>")
         for r in ch:
             #r.subject = time.strftime('%Y-%m-%d %H:%M')+' - '
-            self.response.out.write("<tr><td>"+str(r.branch)+"</td>\n")
+            self.response.out.write("<tr><td>"+r.branch+"</td>\n")
             self.response.out.write("<td>"+str(r.id)+"</td>\n")
-            self.response.out.write("<td>"+str(r.subject)+"</td>\n")
-            self.response.out.write("<td>"+str(r.project)+"</td>\n")
+            self.response.out.write("<td>"+r.subject+"</td>\n")
+            self.response.out.write("<td>"+r.project+"</td>\n")
             self.response.out.write("<td>"+str(r.last_updated)+"</td></tr>\n")
         self.response.out.write("</tbody></table>")
         
@@ -178,48 +234,50 @@ class ShowDb(webapp.RequestHandler):
 class ShowProjects(webapp.RequestHandler):
     def get(self):
         branch = qs_branch(self)
-        device = qs_device(self)
-        self.response.headers['Content-Type'] = 'text/plain'
         
-        q = db.GqlQuery("SELECT * FROM Change ORDER BY project")
-        ch = q.fetch(500)
-        
-        seen = []
-        for r in ch:
-            if r.project in seen: continue
-            self.response.out.write(str(r.project)+"\n")
-            seen.append(r.project)
+        p_list = project(branch, '--all--', True)
+        self.response.headers['Content-Type'] = 'text/plain; charset=UTF-8'
+        for p in p_list:
+            self.response.out.write("%s; %s; %s\n" %(p.branch, p.type, p.project))
         
         return
 
 
 class ShowCommonProjects(webapp.RequestHandler):
-    def array(self):
-        q = db.GqlQuery("SELECT * FROM Change ORDER BY project")
-        ch = q.fetch(500)
-        
-        dev_p = CustomRomDevices().getDevices()['projects']
-        seen = []
-        for r in ch:
-            if r.project in dev_p: continue
-            if r.project in seen: continue
-            if r.project == 'KANG': continue
-            if 'android_device_' in r.project: continue
-            if 'device_' in r.project: continue
-            if 'android_hardware_' in r.project: continue
-            if 'android_kernel_' in r.project: continue
-            if '-kernel-' in r.project: continue
-            seen.append(r.project)
-        return seen
-        
     def get(self):
         branch = qs_branch(self)
-        device = qs_device(self)
-        self.response.headers['Content-Type'] = 'text/plain'
         
-        for p in self.array():
-            self.response.out.write(p+"\n")
+        p_list = project(branch, 'common', True)
+        self.response.headers['Content-Type'] = 'text/plain; charset=UTF-8'
+        for p in p_list:
+            self.response.out.write("%s; %s; %s\n" %(p.branch, p.type, p.project))
         
+        return
+
+
+class LoadProjects(webapp.RequestHandler):
+    def get(self):
+        ch = Change.all()
+        
+        seen = {}
+        db.delete(Project.all())
+        dev_p = CustomRomDevices().getDevices()['projects']
+        self.response.headers['Content-Type'] = 'text/plain; charset=UTF-8'
+        for c in ch:
+            if c.project == 'KANG': continue
+            if c.project in seen: continue
+            
+            p_type = project_type(c.project)
+            self.response.out.write(c.project+"\n")
+            seen[c.project] = 1
+            project = Project(
+                        branch=c.branch,
+                        type=p_type,
+                        project=c.project
+                    )
+            project.put()
+        
+        memcache.flush_all()
         return
 
 
@@ -227,44 +285,51 @@ class RmDuplicate(webapp.RequestHandler):
     def get(self):
         device = qs_device(self)
         
-        self.response.headers['Content-Type'] = 'text/html'
+        self.response.headers['Content-Type'] = 'text/html; charset=UTF-8'
         memcache.flush_all()
         
-        q = db.GqlQuery("SELECT * FROM Change ORDER BY id")
-        ch = q.fetch(500)
+        ch = Change.gql("ORDER BY id")
         
         seen = []
         self.response.out.write("<table>")
         self.response.out.write("<thead><tr><td>action</td><td>branch</td><td>id</td><td>subject</td><td>project</td><td>last_updated</td></tr></thead><tbody>")
-        for r in ch:
-            action = 'keep'
-            if r.id in seen:
-                action = 'remove'
-                r.delete()
+        timeout = True
+        
+        while timeout:
+            try:
+                for r in ch:
+                    action = 'keep'
+                    if r.id in seen:
+                        action = 'remove'
+                        r.delete()
+                    
+                    if r.branch is None:
+                        r.branch = 'gingerbread'
+                        r.put()
+                    
+                    if r.project == 'KANG' and not re.search("^.*#dev:.*$", r.subject):
+                        r.subject = r.subject+"#dev:"+device
+                        r.put()
+                    if r.project == 'KANG' and re.search("^.*?#dev:.*?#dev:.*$", r.subject):
+                        r.subject = re.sub(r"^(.*?#dev:.*?)#dev:.*?$", r'\1', r.subject)
+                        r.put()
+                    if r.project == 'KANG' and re.search("^\d\d\d\d-\d\d-\d\d \d\d:\d\d - (.*#dev:.*)$", r.subject):
+                        r.subject = re.sub(r"^\d\d\d\d-\d\d-\d\d \d\d:\d\d - (.*#dev:.*)$", r'\1', r.subject)
+                        r.put()
+                    
+                    seen.append(r.id)
+                    #r.subject = time.strftime('%Y-%m-%d %H:%M')+' - '
+                    self.response.out.write("<tr>")
+                    self.response.out.write("<td>"+action+"</td>\n")
+                    self.response.out.write("<td>"+r.branch+"</td>\n")
+                    self.response.out.write("<td>"+str(r.id)+"</td>\n")
+                    self.response.out.write("<td>"+r.subject+"</td>\n")
+                    self.response.out.write("<td>"+r.project+"</td>\n")
+                    self.response.out.write("<td>"+str(r.last_updated)+"</td></tr>\n")
+                    timeout = False
             
-            if r.branch is None:
-                r.branch = 'gingerbread'
-                r.put()
-            
-            if r.project == 'KANG' and not re.search("^.*#dev:.*$", r.subject):
-                r.subject = r.subject+"#dev:"+device
-                r.put()
-            if r.project == 'KANG' and re.search("^.*?#dev:.*?#dev:.*$", r.subject):
-                r.subject = re.sub(r"^(.*?#dev:.*?)#dev:.*?$", r'\1', r.subject)
-                r.put()
-            if r.project == 'KANG' and re.search("^\d\d\d\d-\d\d-\d\d \d\d:\d\d - (.*#dev:.*)$", r.subject):
-                r.subject = re.sub(r"^\d\d\d\d-\d\d-\d\d \d\d:\d\d - (.*#dev:.*)$", r'\1', r.subject)
-                r.put()
-            
-            seen.append(r.id)
-            #r.subject = time.strftime('%Y-%m-%d %H:%M')+' - '
-            self.response.out.write("<tr>")
-            self.response.out.write("<td>"+action+"</td>\n")
-            self.response.out.write("<td>"+str(r.branch)+"</td>\n")
-            self.response.out.write("<td>"+str(r.id)+"</td>\n")
-            self.response.out.write("<td>"+str(r.subject)+"</td>\n")
-            self.response.out.write("<td>"+str(r.project)+"</td>\n")
-            self.response.out.write("<td>"+str(r.last_updated)+"</td></tr>\n")
+            except DeadlineExceededError:
+                timeout = True
         
         self.response.out.write("</tbody></table>")
         memcache.flush_all()
@@ -278,7 +343,7 @@ class ChangesAvailableDevice(webapp.RequestHandler):
         device = qs_device(self)
         lc = Ajax().filter(device, branch)
         
-        self.response.headers['Content-Type'] = 'text/plain'
+        self.response.headers['Content-Type'] = 'text/plain; charset=UTF-8'
         status = 200
         for c in lc:
             #self.response.out.write(str(c.id) + ": " + c.project + ", " + c.subject + "\n")
@@ -305,10 +370,9 @@ class ChangesAvailable(webapp.RequestHandler):
         device = qs_device(self)
         lc = last_changes(branch)
         
-        self.response.headers['Content-Type'] = 'text/plain'
+        self.response.headers['Content-Type'] = 'text/plain; charset=UTF-8'
         status = 200
         for c in lc:
-            #self.response.out.write(str(c.id) + ": " + c.project + ", " + c.subject + "\n")
             if c.project == 'KANG' and re.search("^"+kang+"(#dev:"+device+")?$", c.subject):
                 status = 201
                 break
@@ -341,12 +405,15 @@ class ReviewsCron(webapp.RequestHandler):
 
     def _update_changes(self, changes=[], known_ids=[]):
         skipped = 0
+        updates = False
+        project_seen = {}
 
         for c in changes:
             if c['id']['id'] in known_ids:
                 skipped += 1
                 continue
 
+            updates = True
             change = Change(id=c['id']['id'],
                     branch=c['branch'],
                     project=c['project']['key']['name'].split("/")[1],
@@ -354,11 +421,24 @@ class ReviewsCron(webapp.RequestHandler):
                     last_updated=c['lastUpdatedOn']
                     )
             change.put()
+            
+            # append new project
+            p_list = project_list(change.branch, '--all--')
+            if not change.project in p_list and not change.project in project_seen:
+                project = Project(
+                                branch=change.branch,
+                                type=project_type(change.project),
+                                project=change.project
+                            )
+                project.put()
+                project_seen[change.project] = 1
+        
+        if updates:
+            # flush all memcache on new changes for people to see them immediately
+            memcache.delete_multi(('known_ids', 'last_changes', 'filtered', 'merge-builds', 'project', 'project-list'))
+            #memcache.flush_all()
 
-        # flush all memcache on new changes for people to see them immediately
-        memcache.flush_all()
-
-        self.response.headers['Content-Type'] = 'text/plain'
+        self.response.headers['Content-Type'] = 'text/plain; charset=UTF-8'
         self.response.out.write("Skipped %d of %d changes" % (skipped, len(changes)) + "\n")
 
     def get(self):
@@ -369,23 +449,27 @@ class ReviewsCron(webapp.RequestHandler):
 
         amount = 60
         qa = self.request.get('amount')
-
         if qa:
             amount = int(qa)
-            memcache.flush_all()
+            if amount > query_max: amount = query_max
 
         change_proxy = proxy.ServerProxy(gerrit_url+'gerrit/rpc/ChangeListService')
-        changes = change_proxy.allQueryNext("status:merged","z",amount)['changes']
-        #changes = change_proxy.allQueryNext("status:merged branch:ics","z",amount)['changes']
-        #changes = change_proxy.allQueryNext("status:merged branch:gingerbread","z",amount)['changes']
-        #self.response.out.write(json.dumps(changes))
+        try:
+            changes = change_proxy.allQueryNext("status:merged","z",amount)['changes']
+            #changes = change_proxy.allQueryNext("status:merged branch:ics","z",amount)['changes']
+            #changes = change_proxy.allQueryNext("status:merged branch:gingerbread","z",amount)['changes']
+            #self.response.out.write(json.dumps(changes))
+        except:
+            self.response.headers['Content-Type'] = 'text/plain; charset=UTF-8'
+            self.response.out.write("ERROR: cannot fetch changes, error occurred\n")
+            return
 
         known_ids = self._known_ids()
 
         received_ids = [c['id']['id'] for c in changes]
 
         if is_subset(received_ids, known_ids):
-            self.response.headers['Content-Type'] = 'text/plain'
+            self.response.headers['Content-Type'] = 'text/plain; charset=UTF-8'
             self.response.out.write("Skipped all %d changes" % len(changes) + "\n")
             return
 
@@ -395,7 +479,7 @@ class ReviewsCron(webapp.RequestHandler):
 class KangExtension(webapp.RequestHandler):
     def check(self, webapp):
         if use_kang_extension == True: return use_kang_extension
-        webapp.response.headers['Content-Type'] = 'text/plain'
+        webapp.response.headers['Content-Type'] = 'text/plain; charset=UTF-8'
         webapp.response.out.write("KANG extension: disabled")
         webapp.response.set_status(404)
         return use_kang_extension
@@ -412,11 +496,11 @@ class NewKang(webapp.RequestHandler):
                 branch = branch,
                 project = 'KANG',
                 subject = kang+'#dev:'+device,
-                last_updated = time.strftime('%Y-%m-%d %H:%M:%S.000000000')
+                last_updated = time.strftime('%Y-%m-%d %H:%M:%S.000000000', time.gmtime(time.time()))
                 )
         change.put()
-        memcache.flush_all()
-        self.response.headers['Content-Type'] = 'text/plain'
+        memcache.delete_multi(('last_changes', 'filtered'))
+        self.response.headers['Content-Type'] = 'text/plain; charset=UTF-8'
         self.response.out.write("KEY: '"+str(change.key().id())+"'\n")
         self.response.out.write("Added KANG: '"+kang+"'\n")
 
@@ -428,19 +512,18 @@ class RemoveKang(webapp.RequestHandler):
         kangId = qs_kang_id(self)
         branch = qs_branch(self)
         
-        q = db.GqlQuery("SELECT * FROM Change WHERE project = 'KANG' AND branch=:branch", branch=branch)
-        kangs = q.fetch(500)
+        kangs = Change.gql("WHERE project = 'KANG' AND branch=:branch", branch=branch)
         
         cmd_done = 0;
-        self.response.headers['Content-Type'] = 'text/html'
+        self.response.headers['Content-Type'] = 'text/html; charset=UTF-8'
         self.response.out.write("<table>")
         self.response.out.write("<thead><tr><td>id (click to rename)</td><td>info</td><td>branch</td><td>subject</td><td>project</td><td>last_updated</td></tr></thead><tbody>")
         for k in kangs:
-            self.response.out.write('<tr><td><a href="/remove_kang/?branch='+str(k.branch)+'&kang='+kang+'&kangId='+str(k.id)+'">'+str(k.id)+'</a></td><td>Checking KANG</td><td>'+str(k.branch)+'</td><td>'+str(k.subject)+'</td><td>'+str(k.project)+'</td><td>'+str(k.last_updated)+'</td></tr>\n')
+            self.response.out.write('<tr><td><a href="/remove_kang-off/?branch='+k.branch+'&kang='+kang+'&kangId='+str(k.id)+'">'+str(k.id)+'</a></td><td>Checking KANG</td><td>'+k.branch+'</td><td>'+k.subject+'</td><td>'+k.project+'</td><td>'+str(k.last_updated)+'</td></tr>\n')
             if (k.subject == kang) or (str(k.id) == kangId):
                 db.delete(k)
-                memcache.flush_all()
-                self.response.out.write('<tr><td>'+str(k.id)+'</td><td>Removed KANG</td><td>'+str(k.branch)+'</td><td>'+str(k.subject)+'</td><td>'+str(k.project)+'</td><td>'+str(k.last_updated)+'</td></tr>\n')
+                memcache.delete_multi(('last_changes', 'filtered'))
+                self.response.out.write('<tr><td>'+str(k.id)+'</td><td>Removed KANG</td><td>'+k.branch+'</td><td>'+k.subject+'</td><td>'+k.project+'</td><td>'+str(k.last_updated)+'</td></tr>\n')
                 cmd_done = 1;
                 break
         self.response.out.write("</tbody></table>")
@@ -457,22 +540,21 @@ class RenameKang(webapp.RequestHandler):
         kang = qs_kang_name(self)
         kangId = qs_kang_id(self)
         
-        q = db.GqlQuery("SELECT * FROM Change WHERE branch = :branch AND project = 'KANG'", branch=branch)
-        kangs = q.fetch(90)
+        kangs = Change.gql("WHERE branch = :branch AND project = 'KANG'", branch=branch)
         
         cmd_done = 0
-        self.response.headers['Content-Type'] = 'text/html'
+        self.response.headers['Content-Type'] = 'text/html; charset=UTF-8'
         self.response.out.write("<h2>New KANG name '"+kang+"'</h2>\n")
         self.response.out.write("<table>")
         self.response.out.write("<thead><tr><td>id (click to rename)</td><td>info</td><td>branch</td><td>subject</td><td>project</td><td>last_updated</td></tr></thead><tbody>")
         for k in kangs:
-            self.response.out.write('<tr><td><a href="/rename_kang/?branch='+str(k.branch)+'&kang='+kang+'--NewName&kangId='+str(k.id)+'">'+str(k.id)+'</a></td><td>Checking KANG</td><td>'+str(k.branch)+'</td><td>'+str(k.subject)+'</td><td>'+str(k.project)+'</td><td>'+str(k.last_updated)+'</td></tr>\n')
+            self.response.out.write('<tr><td><a href="/rename_kang-off/?branch='+k.branch+'&kang='+kang+'--NewName&kangId='+str(k.id)+'">'+str(k.id)+'</a></td><td>Checking KANG</td><td>'+k.branch+'</td><td>'+k.subject+'</td><td>'+k.project+'</td><td>'+str(k.last_updated)+'</td></tr>\n')
             if (str(k.id) == kangId):
                 old_name = k.subject
                 k.subject = kang+"#dev:"+device
                 k.put()
-                memcache.flush_all()
-                self.response.out.write('<tr><td><a href="">'+str(k.id)+'</a></td><td>Renamed KANG (old: '+old_name+'; new: '+kang+')</td><td>'+str(k.branch)+'</td><td>'+str(k.subject)+'</td><td>'+str(k.project)+'</td><td>'+str(k.last_updated)+'</td></tr>\n')
+                memcache.delete_multi(('last_changes', 'filtered'))
+                self.response.out.write('<tr><td><a href="">'+str(k.id)+'</a></td><td>Renamed KANG (old: '+old_name+'; new: '+kang+')</td><td>'+k.branch+'</td><td>'+k.subject+'</td><td>'+k.project+'</td><td>'+str(k.last_updated)+'</td></tr>\n')
                 cmd_done = 1
                 break
         self.response.out.write("</tbody></table>")
@@ -484,30 +566,52 @@ class RenameKang(webapp.RequestHandler):
 class ClearDB(webapp.RequestHandler):
     def get(self):
         if allow_db_clear == False:
-            self.response.headers['Content-Type'] = 'text/plain'
+            self.response.headers['Content-Type'] = 'text/plain; charset=UTF-8'
             self.response.out.write("This feature is disabled...\n")
             self.response.set_status(401)
             return
+        db.delete(Project.all())
         db.delete(Change.all())
         memcache.flush_all()
-        self.response.headers['Content-Type'] = 'text/plain'
+        self.response.headers['Content-Type'] = 'text/plain; charset=UTF-8'
         self.response.out.write("Database is empty...\n")
 
 
 class FlushCache(webapp.RequestHandler):
     def get(self):
-        self.response.headers['Content-Type'] = 'text/plain'
+        self.response.headers['Content-Type'] = 'text/plain; charset=UTF-8'
         memcache.flush_all()
         self.response.out.write("Cache flushed...\n")
 
 
 class Admin(webapp.RequestHandler):
     def get(self):
+        user = None
+        try:
+            # Get the db.User that represents the user on whose behalf the
+            # consumer is making this request.
+            user = oauth.get_current_user()
+        except oauth.OAuthRequestError, e:
+            # The request was not a valid OAuth request.
+            # ...
+            #self.response.headers['Content-Type'] = 'text/plain; charset=UTF-8'
+            #self.response.out.write('Auth error: The request was not a valid OAuth request.')
+            user = None
+        
+        if user:
+            greeting = ("Welcome, %s! (<a href=\"%s\">sign out</a>)" %
+                        (user.nickname(), users.create_logout_url("/")))
+        else:
+            greeting = ("<a href=\"%s\">Sign in or register</a>" %
+                        users.create_login_url("/"))
+        
         branch = qs_branch(self)
         device = qs_device(self)
-        
+
         path = os.path.join(os.path.dirname(__file__), 'admin.html')
-        self.response.out.write(template.render(path, {"for_device": device, "for_branch": branch}))
+        self.response.out.write(template.render(path, {"device": device, "branch": branch,
+                                "greeting": greeting, "user": user, "custom_rom": custom_rom,
+                                "gerrit_url": gerrit_url}))
 
 
 class Test(webapp.RequestHandler):
@@ -525,37 +629,43 @@ class RssFeed(webapp.RequestHandler):
             return builds
         
         build_branch  = CustomRomBuilds().getBuilds(device, False)
-        builds        = build_branch[branch]
+        if branch not in build_branch: return
+        
+        builds = build_branch[branch]
         if len(builds) == 0: return
+        
         changes       = Ajax().filter(device, branch)
-        build_stack   = sorted (builds, key=itemgetter(3), reverse=False)
+        build_stack   = sorted(builds, key=itemgetter(3), reverse=False)
         c_build       = build_stack.pop()
         n_build       = None
         if len(build_stack) > 0: n_build = build_stack.pop()
+        
         for c in changes:
             if c['project'] == 'KANG': continue
             
-            c_date = c['last_updated_utc']
-            if c_date >=  c_build[3]:
-                continue
-            
-            build_no = None
-            if custom_rom == 'aokp': build_no = re.search (r"build.*?(\d+)", c['subject'])
-            
-            if n_build is not None:
-                while c_date < n_build[3] or (custom_rom == 'aokp' and build_no and ('-'+build_no.group(1)+'.zip') in c['subject']):
-                    c_build = n_build
-                    n_build = build_stack.pop()
+            c_date = c['last_updated_offset']
+            if c_date < c_build[3]:
+                build_no = None
+                if custom_rom == 'aokp': build_no = re.search (r"build.*?(\d+)", c['subject'])
                 
-            if len(c_build) < 5: c_build.append([])
-            c_build[4].append((c['subject']+" ("+c['project']+")"))
+                if n_build is not None:
+                    while c_date < n_build[3] or (custom_rom == 'aokp' and build_no and ('-'+build_no.group(1)+'.zip') in c['subject']):
+                        c_build = n_build
+                        if len(build_stack) > 0:
+                            n_build = build_stack.pop()
+                        else:
+                            n_build = None
+                            break
+                
+                if len(c_build) < 5: c_build.append([])
+                c_build[4].append((c['subject']+" ("+c['project']+")"))
         
-        memcache.set('merge-builds', builds, 600, namespace=cache_ns)
+        memcache.set('merge-builds', builds, cache_rss_merge_timeout, namespace=cache_ns)
         return builds
     
-    def get(self):
-        device = qs_device(self)
-        branch = qs_branch(self)
+    def get(self, device=None, branch=None):
+        if device is None: device = qs_device(self)
+        if branch is None: branch = qs_branch(self)
         
         path = os.path.join(os.path.dirname(__file__), 'rss.xml')
         self.response.headers['Content-Type'] = 'application/rss+xml'
@@ -570,8 +680,9 @@ class CustomRomDevices(webapp.RequestHandler):
             if device == 'i777': return 'galaxys2att'
         elif current_branch == 'gingerbread':
             if device == 'galaxys2att': return 'i777'
-        if device == 'vzwtab': return 'galaxytab7c'
         if device == 'a500': return 'picasso'
+        if device == 'harmony': return 'smb_a1002'
+        if device == 'vzwtab': return 'galaxytab7c'
     
     def getBranch(self, device, default_branch='ics'):
         dev_branch = ''
@@ -605,12 +716,20 @@ class CustomRomDevices(webapp.RequestHandler):
         if force == False and cr_devices is not None:
             return cr_devices
 
+        dev_list = [];
+        cache_cr_dev_timeout = cache_device_timeout
+        try:
+            html = urlopen(build_url).read()
+            html = re.sub(r"[\n\r\t]", r'', html)
+            html = re.sub(build_dev_list_regex, r'\1', html)
+            for r in re.finditer(build_dev_regex, html):
+                dev_list.append(r.group(1))
+        except:
+            dev_list = device_specific.keys()
+            cache_cr_dev_timeout = 10
+        
         cr_devices = {"projects": {}, "dev": {}, "dev_sort": [], "man": {}, "man_sort": [], "nav_list": [], "-unknown-": {}, "-unknown-_sort": []}
-        html = urlopen(build_url).read()
-        html = re.sub(r"[\n\r\t]", r'', html)
-        html = re.sub(build_dev_list_regex, r'\1', html)
-        for r in re.finditer(build_dev_regex, html):
-            c_dev = r.group(1)
+        for c_dev in dev_list:
             if c_dev == "all": continue
             
             if c_dev in device_specific:
@@ -669,7 +788,7 @@ class CustomRomDevices(webapp.RequestHandler):
             nl_dev.append(cr_devices['-unknown-'][d])
         if nl_dev: cr_devices['nav_list'].append({"name": 'unknown', "dev_list": nl_dev})
         
-        memcache.set('cr-devices', cr_devices, 1800)
+        memcache.set('cr-devices', cr_devices, cache_cr_dev_timeout)
         return cr_devices
         
     def get(self):
@@ -695,9 +814,13 @@ class CustomRomBuilds(webapp.RequestHandler):
         if force == False and builds is not None:
             return builds
 
-        html = urlopen(build_url+device).read()
-        html = re.sub(r"[\n\r\t]", r'', html)
-        html = re.sub(build_list_regex, r'\1', html)
+        try:
+            html = urlopen(build_url+device).read()
+            html = re.sub(r"[\n\r\t]", r'', html)
+            html = re.sub(build_list_regex, r'\1', html)
+        except:
+            return
+        
         nightlies_branch = {}
         for branch in branches:
             nightlies_branch[branch] = []
@@ -731,9 +854,14 @@ class CustomRomBuilds(webapp.RequestHandler):
             
         if custom_rom == 'aokp':
             for branch in nightlies_branch:
-                nightlies_branch[branch] = sorted(nightlies_branch[branch], reverse=True)
+                nightlies_branch[branch] = sorted(nightlies_branch[branch], key=itemgetter(3), reverse=True)
         
-        memcache.set('cr-builds', nightlies_branch, 600, namespace=device)
+        for branch in nightlies_branch:
+            # clear cached merge for RSS feed
+            cache_ns = device+"-"+branch
+            memcache.delete('merge-builds', namespace=cache_ns)
+        
+        memcache.set('cr-builds', nightlies_branch, cache_build_timeout, namespace=device)
         return nightlies_branch
         
     def get(self):
@@ -755,9 +883,10 @@ class CustomRomBuilds(webapp.RequestHandler):
 
 
 class MainPage(webapp.RequestHandler):
-    def get(self):
-        branch = qs_branch(self)
-        device = qs_device(self)
+    def get(self, device=None, branch=None):
+        if device is None: device = qs_device(self)
+        if branch is None: branch = qs_branch(self)
+        
         device_config = CustomRomDevices().getDevices()
         manufacturer = ''
         dev_title = ''
@@ -773,24 +902,6 @@ class MainPage(webapp.RequestHandler):
 
 
 class Ajax(webapp.RequestHandler):
-    def common_projects(self):
-        file_name = 'common_projects'+custom_rom
-        common = memcache.get(file_name)
-
-        if common is not None:
-            return common
-
-        if True:
-            cp = ShowCommonProjects().array()
-        else:
-            f = open((+file_name+'.txt'), 'r')
-            cp = [p.strip() for p in f.readlines()]
-            f.closed
-
-        memcache.set(file_name, cp, 3600)
-
-        return cp
-
     def filter(self, device, branch):
         filter_ns = device+'-'+branch
         filtered = memcache.get('filtered', filter_ns)
@@ -800,16 +911,24 @@ class Ajax(webapp.RequestHandler):
             return filtered
 
         filtered = []
-        common = self.common_projects()
+        common = project_list(branch, 'common')
 
         lc = last_changes(branch)
         for c in lc:
-            if c.project in common or (device in device_specific.keys() and c.project in device_specific[device]) or (c.project == 'KANG' and re.search("^.*#dev:"+device+"$", c.subject)):
-                c_time = parse_timestamp(c.last_updated) + timedelta(hours=gerrit_time_offset)
+            if (
+                    c.project in common
+                    or (re.search ("vendor_", c.project) and re.search(r'\b%s\b' % device, c.subject, re.IGNORECASE))
+                    or (c.project == "vendor_aokp" and is_not_device_specific(c.subject))
+                    or (device in device_specific.keys() and c.project in device_specific[device])
+                    or (c.project == 'KANG' and re.search("^.*#dev:"+ device +"$", c.subject))
+                ):
+                c_time = parse_timestamp(c.last_updated)
+                c_time_offset = c_time + timedelta(hours=gerrit_time_offset)
                 filtered.append({"id": c.id, "branch": c.branch, "project": c.project,
-                    "subject": c.subject, "last_updated": c.last_updated, "last_updated_utc": c_time})
+                    "subject": c.subject, "last_updated_offset": c_time_offset, 
+                    "last_updated": c.last_updated, "last_updated_utc": c_time})
 
-        memcache.set('filtered', filtered, 600, namespace=filter_ns)
+        memcache.set('filtered', filtered, namespace=filter_ns)
 
         return filtered
 
@@ -821,12 +940,13 @@ class Ajax(webapp.RequestHandler):
         self.response.out.write(json.dumps(self.filter(device, branch), default=json_datetime_handler))
 
 
-application = webapp.WSGIApplication(
-                                     [('/', MainPage), ('/changelog/', Ajax),
+application = webapp.WSGIApplication([('/', MainPage),
+                                         ('/changelog/', Ajax),
                                          ('/pull_reviews/', ReviewsCron),
                                          ('/get_builds/', CustomRomBuilds),
                                          ('/get_devices/', CustomRomDevices),
                                          ('/clear_db/', ClearDB),
+                                         ('/load_project/', LoadProjects),
                                          ('/rm_duplicate/', RmDuplicate),
                                          ('/flush/', FlushCache),
                                          ('/show_db/', ShowDb),
@@ -839,9 +959,12 @@ application = webapp.WSGIApplication(
                                          ('/rename_kang/', RenameKang),
                                          ('/admin', Admin),
                                          ('/admin.html', Admin),
+                                         ('/test', Test),
                                          ('/rss', RssFeed),
                                          ('/rss.xml', RssFeed),
-                                         ('/test', Test)],
+                                         ('/rss/([^/#\?]+)(?:/([^/#\?]*))?', RssFeed),
+                                         ('/([^/#\?]+)(?:/([^/#\?]*))?', MainPage),
+                                         ],
                                      debug=True)
 
 

@@ -13,6 +13,14 @@ String.prototype.cap_first = function(){
 	return this.charAt(0).toUpperCase() + this.slice(1);
 }
 
+if (!Array.prototype.forEach) {
+	Array.prototype.forEach = function( callback ) {
+		for( var k=0; k<this .length; k++ ) {
+			callback( this[ k ], k, this);
+		}
+	}
+}
+
 function pad(n, len) {
    
     s = n.toString();
@@ -26,7 +34,6 @@ function pad(n, len) {
 
 function parse_date(date_string) {
 	// 2011-03-04 22:16:48.000000000
-	if (!date_string) { return; };
 	var pd = date_string.match(/(\d{4})-(\d{1,2})-(\d{1,2})[\sT](\d{1,2}):(\d{1,2}):(\d{1,2})/);
 	return new Date(Date.UTC(pd[1], parseInt(pd[2]-1), pd[3], pd[4], pd[5], pd[6]));
 }
@@ -37,14 +44,21 @@ function format_date(t, utc) {
 	t = utc ?
 		[t.getUTCFullYear(),t.getUTCMonth(),t.getUTCDate(),t.getUTCHours(),t.getUTCMinutes(),t.getUTCSeconds()] :
 		[t.getFullYear(),t.getMonth(),t.getDate(),t.getHours(),t.getMinutes(),t.getSeconds()];
-	return t[0] + "-" + pad(t[1], 2) + "-" + pad(t[2], 2) + " " + pad(t[3], 2) + ":" + pad(t[4], 2);
+	return t[0] + "-" + pad(t[1]+1, 2) + "-" + pad(t[2], 2) + " " + pad(t[3], 2) + ":" + pad(t[4], 2);
 }
 
 function main() {
 	var disableNightly = false;
 	var nightly;
 	var nd;
-	var nightlies = nightlies_branch[branch];
+	var nightlies;
+	
+	if (nightlies_branch && nightlies_branch[branch]) {
+		nightlies = nightlies_branch[branch];
+	} else {
+		$('#info_text').html("<h4 class='error'>Download server is down or there are no builds for your device and/or branch ("+ device +", "+ branch +")</h4>");
+		$('#info_text').css("visibility", "visible");
+	}
 	
 	if (!disableNightly && nightlies && nightlies.length > 0) {
 		nightly = nightlies.shift();
@@ -56,36 +70,42 @@ function main() {
 		disableNightly = true;
 	}
 	$('#merged_changes').empty();
-	if (merged && (!nightly || (nd && merged[0] && merged[0].project != 'KANG' && (parse_date(merged[0].last_updated_utc) > nd)))) {
+	if (merged && (!nightly || (nd && merged[0] && merged[0].project != 'KANG' && (parse_date(merged[0].last_updated_offset) > nd)))) {
 		$('#merged_changes').append("<h3>to be included in next nightly:</h3>");
 	}
 	
 	var prevKang = '';
 	var new_table = true;
 	merged.forEach(function(e, i, a) {
-		var cd = parse_date(e.last_updated_utc);
+		var cd = parse_date(e.last_updated_offset);
+		var cd_utc = parse_date(e.last_updated_utc);
 		var build_no = e.subject.match(/^(?:build|milestone) (\d+)$/);
 		
 		if (!disableNightly && nightly) {
 			while ((custom_rom == 'aokp' && build_no && nightly[0].indexOf('-'+build_no[1]+'.zip') != -1) 
-			  || cd < nd && (nightlies.length > 0)) {
-				nightly_link = "<a href='"+ build_url + device +"' name='"+ nightly[0] +"'>" + nightly[0] + "</a> ("+ nightly[2] +")"+
+			  || cd < nd) {
+				nightly_link = "<a href='"+ build_url + device +"' name='"+ nightly[0] +"' onclick='return gaOutLink(this, \"Download build\", this.href);'>" + nightly[0] + "</a> ("+ nightly[2] +")"+
 				  " <span class='nightly_date' title='UTC: "+ nightly[3].replace("T", " ") +"'>["+ nd.toString() +"]</span>";
 				
 				$('#merged_changes').append("<h4 class='"+ nightly[2].toLowerCase() +"'>" + nightly_link + "</h4>");
 				new_table = true;
 				
-				nightly = nightlies.shift();
-				nd = parse_date(nightly[3]);
+				if (nightlies.length > 0) {
+					nightly = nightlies.shift();
+					nd = parse_date(nightly[3]);
+				} else {
+					nightly = null;
+					break;
+				}
 			}
 		}
 		
 		var kangId = e.subject.replace(/(.*)#dev:.*/,"$1");
 		if (!(e.project=='KANG' && prevKang==('KANG' + kangId))) {
 			if (e.project=='KANG') {
-				var fileName = "update-cm-"+ branch +"-UNOFFICIAL-"+ device +"-signed.zip"
-				$('#merged_changes').append("<h4 class='unofficial'><a href='http://www.weik-net.com/cm7/"+ fileName +"'>" + fileName +
-				  "</a> ("+ e.project + ") <span class='nightly_date' title='"+ e.last_updated_utc.substring(0, 16) +"'>["+ cd.toString() +"]</span></h4>");
+				var fileName = "update-"+ custom_rom +"-"+ branch +"-UNOFFICIAL-"+ device +"-signed.zip"
+				$('#merged_changes').append("<h4 class='unofficial'><a href='http://www.weik-net.com/"+ custom_rom +"/"+ fileName +"' onclick='return gaOutLink(this, \"Download build (unofficial)\", this.href);'>" + fileName +
+				  "</a> ("+ e.project + ") <span class='nightly_date' title='"+ e.last_updated_utc.substring(0, 16) +"'>["+ cd_utc.toString() +"]</span></h4>");
 				new_table = true;
 				prevKang = 'KANG' + kangId;
 			} else {
@@ -94,7 +114,7 @@ function main() {
 					$('#merged_changes').append("<table class='tMerge' cellspacing='0' cellpadding='0'></table>");
 					new_table = false;
 				}
-				$('#merged_changes > table:last').append("<tr><td class='tDate' title='UTC: "+ e.last_updated_utc.substring(0, 16) +"'>" + format_date(cd) +
+				$('#merged_changes > table:last').append("<tr><td class='tDate' title='UTC: "+ e.last_updated_utc.substring(0, 16) +"'>" + format_date(cd_utc) +
 				  "</td><td class='tDesc'>" + e.subject.link(gerrit_url + e.id) + 
 				  " - [" + e.project + "]</td></tr>");
 			}
@@ -173,12 +193,13 @@ function load_data(new_branch) {
 	$('#info_text').empty();
 	$('#info_text').css("visibility", "hidden");
 	$('#merged_changes').html("Please wait, while loading changesets and nightlies...");
-	$('#rss_ref').attr("href", "/rss?device="+device+"&branch="+branch);
+	$('#rss_ref').attr("href", "/rss/"+ device +"/"+ branch);
 	
 	$.get(url_changelog, {device: device, branch: branch}, parse_changelog);
 	$.get(url_nightlies, {device: device, type: ''}, parse_nightlies_json);
 }
 
+var nav_active_prev;
 $(document).ready(function () {
 	qs_branch = get_qs("branch");
 	qs_device = get_qs("device");
@@ -213,8 +234,25 @@ $(document).ready(function () {
 	$("#announcement_header").click(function() { $("#announcement_text").toggleClass("hidden") ; });
 	
 	$(".manufacturer").click(function() {
-		var was_hidden = $(this).next('ul').hasClass("hidden");
-		$('ul').addClass("hidden");
-		if (was_hidden) { $(this).next('ul').toggleClass("hidden"); }
+		var nav_item = $(this);
+		var nav_menu = $(this).next('ul');
+		if (nav_active_prev) {
+			nav_active_prev.toggleClass("nav_active");
+			nav_active_prev.next('ul').toggleClass("hidden");
+			if (nav_active_prev.attr('id') == nav_item.attr('id')) {
+				nav_active_prev = null;
+				return;
+			}
+		}
+		
+		var height = nav_item.outerHeight();
+		var pos = nav_item.position();
+		nav_item.toggleClass("nav_active");
+		nav_menu.toggleClass("hidden");
+		nav_menu.css({
+				left: pos.left + "px",
+				top: (pos.top + height) + "px"
+			});
+		nav_active_prev = nav_item;
 	});
 });

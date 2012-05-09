@@ -1,25 +1,27 @@
-body { font-family: arial; background-color: #090909; font-size: 18px; color: #369; padding: 15px; margin: 0 5px 5px 5px; }
-.dev_title { color: #555; }
-.manufacturer { float: left; padding-right: 5px; margin: 4px 4px 4px 0; }
+body { font-family: arial; background-color: #101010; font-size: 18px; color: #E55003; padding: 15px; margin: 0 5px 5px 5px; }
+.dev_title { color: #A58E4B; }
+.manufacturer { float: left; padding: 2px 5px 4px 4px; margin-top: 4x;}
 .manufacturer:hover { cursor: pointer; }
 #nav_unknown {padding-left: 10px;}
-#device_links ul { float: left; position: relative; top: 25px; margin-bottom: 35px; margin-right: 15px; }
+#device_links ul {background-color: #101010; position: absolute; top: 45px; padding: 10px; border: 2px solid #A58E4B;}
+.nav_active {color: #101010; background-color: #A58E4B;}
+.nav_active a:hover {text-decoration: none; background-color: #A58E4B; color: #E55003;}
 li { padding: 2px 0; }
 
-.separator { clear: both; color: #AAA; border: 1px solid; margin: 30px 0px 0px 0px; }
+.separator { clear: both; color: #FF5500; border: 1px solid; margin: 5px 0px 0px 0px; }
 
-#select_options { float: right; color: #666; margin: 4px 0px 4px 4px; }
-#select_options fieldset { display: inline-block; }
+#select_options { float: right; color: #A58E4B; margin: 4px 0px 6px 4px; width: auto;}
+#select_options fieldset { display: inline; }
 #select_options input { margin-right: 0px; }
-#select_options .sep { display: inline-block; vertical-align: bottom; color: #AAA; height: 16px; border: solid #AAA 1px; margin: 0px 5px;};
+#select_options .sep { display: inline-block; vertical-align: bottom; color: #FF5500; height: 16px; border: solid #FF5500 1px; margin: 0px 5px;};
 
 .lastUpdt { display: inline-block; width: 150px; }
 .commitDesc { display: inline-block; }
 .block { display: block; }
-.device { background-color: #222; }
-.highlight { background-color: #555; }
+.device { background-color: #333; }
+.highlight { background-color: #A58E4B; }
 .hidden { display: none; }
-.nightly_date { display: block; padding-top: 3px; font-size: 0.75em; color: #555; width: auto; float: none; }
+.nightly_date { display: block; padding-top: 3px; font-size: 0.75em; color: #A58E4B; width: auto; float: none; }
 
 td { padding: 2px 0; } 
 .tMerge { width: 100%; }
@@ -27,29 +29,30 @@ td { padding: 2px 0; }
 .tDesc  { width: auto; }
 .tProject { width: 370px; min-width: 370px; }
 
-.translation { color: #456; }
-.translation a:link {color: #555}
-.translation a:visited {color: #555}
+.translation { color: #A45209; }
+.translation a:link {color: #A58E4B}
+.translation a:visited {color: #A58E4B}
 
 h1 { font-size: 1.15em; padding: 20px 0px 5px 0px; clear: both; }
 h2 { font-size: 1.15em; padding: 20px 0px 5px 0px; clear: both; }
-h3 { font-size: 1.15em; text-align: center; padding: 20px 0px 5px 0px; color: #555; clear: both; }
-h4 { font-size: 1.2em; text-align: center; padding: 40px 0px 5px 0px; clear: both; }
+h3 { font-size: 1.15em; text-align: center; padding: 20px 0px 6px 0px; color: #A58E4B; clear: both; }
+h4 { font-size: 1.2em; text-align: center; padding: 35px 0px 6px 0px; margin-bottom: 8px; clear: both; border-bottom: 1px solid #A58E4B; }
 .error { font-size: 1.2em; color: #f00; padding: 10px; }
 
-#footer { float: left; line-height: 16px; width: 100%; margin: 20px 0 5px 0; text-align: center; font-size: 0.8em; color: #555; }
-#footer a img {vertical-align: bottom;}
+#footer { float: left; line-height: 16px; width: 100%; margin: 6px 0 12px 0; text-align: center; font-size: 0.8em; color: #A45209; }
+#footer a img, #gplus {vertical-align: bottom; display: inline-block; height: 16px; padding-left: 8px}
 
-#footer a:link {text-decoration: none; color: #444; }
-#footer a:visited {text-decoration: none; color: #444; }
+#footer a:link {text-decoration: none; color: #A58E4B; }
+#footer a:visited {text-decoration: none; color: #A58E4B; }
+#footer .separator {margin: 30px 0 5px 0;}
 
-.info_text { font-size: 1em; margin: 5px 0; padding: 5px 0; color: #369; width: 100%; text-align: center; }
+.info_text { font-size: 1em; margin: 5px 0; padding: 5px 0; color: #FF5500; width: 100%; text-align: center; }
 
 #announcement_header { font-size: 0.7em; margin: 5px 0; color: #f66; width: 100%; text-align: center; }
 #announcement_text   { font-size: 0.7em; color: #f66; width: 100%; text-align: center; }
 
 #announcement_header:hover { cursor: pointer; }
 
-a:link {text-decoration: none; color: #AAA}
-a:visited {text-decoration: none; color: #AAA; }
-a:hover {text-decoration: underline; }
+a:link {text-decoration: none; color: #FFDB43}
+a:visited {text-decoration: none; color: #FFDB43; }
+a:hover {text-decoration: none; background-color: #333; }

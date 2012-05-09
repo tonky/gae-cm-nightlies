@@ -8,13 +8,13 @@
 		<lastBuildDate>{{ builds.0.3|date:"r" }}</lastBuildDate>
 		<pubDate>{{ now|date:"r" }}</pubDate>
 		<docs>http://cyber.law.harvard.edu/rss/rss.html</docs>
-		<link>http://{{ url }}/?device={{ device }}&amp;branch={{ branch }}</link>
-		<atom:link href="http://{{ url }}/rss?device={{ device }}&amp;branch={{ branch }}" rel="self" type="application/rss+xml" />
+		<link>http://{{ url }}/{{ device }}/{{ branch }}?src=rss</link>
+		<atom:link href="http://{{ url }}/rss/{{ device }}/{{ branch }}?src=rss" rel="self" type="application/rss+xml" />
 		<description>List of AOKP builds for {{ device|capfirst }}</description>{% for name, date, btype, utc_date, changes in builds %}
 		<item>
 			<title>{{ name }}</title>
-			<link>http://{{ url }}/?device={{ device }}&amp;branch={{ branch }}#{{ name }}</link>
-			<guid>http://{{ url }}/?device={{ device }}&amp;branch={{ branch }}#{{ name }}</guid>
+			<link>http://{{ url }}/{{ device }}/{{ branch }}?src=rss#{{ name }}</link>
+			<guid>http://{{ url }}/{{ device }}/{{ branch }}#{{ name }}</guid>
 			<description>&lt;p&gt;Changelog for this {{ btype }} build:&lt;/p&gt;
 				{% for change in changes %}&lt;p&gt;{{ change }}&lt;/p&gt;
 				{% endfor %}</description>

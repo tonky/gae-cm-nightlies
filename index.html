@@ -4,15 +4,14 @@
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 		<meta name="description" content="Changelog of {{ custom_rom|upper }} builds ({{ branch }}) for {{ manufacturer|capfirst }} {{ device|capfirst }}{% if dev_title %} ({{ dev_title }}){% endif %}" />
 		<meta name="keywords" content="Android, {{ keywords }}, {{ custom_rom|upper }}, {{ manufacturer|capfirst }}, {{ device|capfirst }}{% if dev_title %}, {{ dev_title }}{% endif %}, {{ branch }}, changelog, build" />
-		<title>{{ custom_rom|upper }} changelog for {{ device|capfirst }}</title>
+		<title>{{ custom_rom|upper }} changelog for {{ manufacturer|capfirst }} {{ device|capfirst }}{% if dev_title %} - {{ dev_title }}{% endif %}</title>
 		<link rel="alternate" type="application/rss+xml"
-			  href="/rss?device={{ device }}&branch={{ branch }}" title="Changelog for {{ manufacturer|capfirst }} {{ device|capfirst }} builds ({{ branch }}) as RSS feed">
+			  href="/rss/{{ device }}/{{ branch }}" title="Changelog for {{ manufacturer|capfirst }} {{ device|capfirst }} builds ({{ branch }}) as RSS feed">
 		<link rel="stylesheet" type="text/css" href="/css/reset.css" />
 		<link rel="stylesheet" type="text/css" href="/css/style.css" />
 		<link rel="icon" href="/favicon.ico" />
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
 		<script type="text/javascript">
-		<!--
 			var branch = "{{ branch }}";
 			var manufacturer = "{{ manufacturer|capfirst }}";
 			var device = "{{ device }}";
@@ -22,10 +21,8 @@
 			var gerrit_url = "{{ gerrit_url }}";
 			var ga_id = "{{ ga_tracking_id }}";
 			var types = ['{{ types|join:"', '" }}'];
-		-->
 		</script>
 		<script type="text/javascript">
-		<!--
 			if (ga_id) {
 				var _gaq = _gaq || [];
 				_gaq.push(['_setAccount', ga_id]);
@@ -38,9 +35,20 @@
 					var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
 				})();
 			}
-		-->
+			
+			function gaOutLink(link, category, action) {
+				if (ga_id) {
+					try {
+						_gaq.push(['_trackEvent', category , action]);
+						setTimeout('document.location = "' + link.href + '"', 100)
+					} catch(err) {}
+					return false;
+				} else {
+					return true;
+				}
+			}
 		</script>
-		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js" type="text/javascript"></script>
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" type="text/javascript"></script>
 		<script src="/js/jquery.xdomainajax.js" type="text/javascript"></script>
 		<script src="/js/jquery.cookie.js" type="text/javascript"></script>
 		<script src="/js/nightlies.js" type="text/javascript"></script>
@@ -50,7 +58,7 @@
 			{% for manufacturer in devices.nav_list %}
 				<span class="manufacturer" id="nav_{{ manufacturer.name }}"><a>{{ manufacturer.name|capfirst }}</a></span>
 				<ul class="hidden" id="{{ manufacturer.name }}">{% for dev in manufacturer.dev_list %}
-					<li><span><a href="/?device={{ dev.name }}&branch={{ dev.branch }}">{{ dev.name|capfirst }}{% if dev.title %} - <span class="dev_title">{{ dev.title }}</span>{% endif %}</a></span></li>{% endfor %}
+					<li><span><a href="/{{ dev.name }}/{{ dev.branch }}">{{ dev.name|capfirst }}{% if dev.title %} - <span class="dev_title">{{ dev.title }}</span>{% endif %}</a></span></li>{% endfor %}
 				</ul>
 			{% endfor %}
 		</div>
@@ -68,7 +76,7 @@
 					{% for type in types %}
 					<input type="checkbox" id="hide_type_{{ type|lower }}"   > {{ type }}</input>{% endfor %}
 				</fieldset><span class="sep"></span><fieldset>
-					<label for="hide_them">Hide translations?</label>
+					<label for="hide_them">Hide translations:</label>
 					<input type="checkbox" id="hide_them" />
 				</fieldset>
 			</form>
@@ -84,9 +92,20 @@
 		<div id="merged_changes">Please wait, while loading changesets and nightlies...</div>
 
 		<div id="footer">
+			<hr class="separator" />
+			
 			&copy; <a href='mailto:gtonky@gmail.com'>Igor Tonkopryadchenko aka TonKy</a> aka xda:igor.tonky (<a href="http://cm-nightlies.appspot.com/?device={{ device }}">cm9 nightlies</a>).<br />
-			Support for <a href="http://{{ url }}/">AOKP</a> builds by <a href="http://www.awalon.de/">awalon</a>. Fork on <a href="https://github.com/awalon/gae-cm-nightlies">github</a>. Feedback is welcome.
-			<a id="rss_ref" class="rss" type="application/rss+xml" href="/rss?device={{ device }}&amp;branch={{ branch }}"><img alt="rss feed" src="/img/rss.gif" title="Changelog for {{ manufacturer|capfirst }} {{ device|capfirst }} builds ({{ branch }}) as RSS feed"></a>
+			Support for <a href="http://aokp-log.appspot.com/{{ device }}/{{ branch }}">AOKP</a> builds by <a href="http://www.awalon.de/">awalon</a>. Fork on <a href="https://github.com/awalon/gae-cm-nightlies">github</a>. Feedback is welcome.
+			<a id="rss_ref" class="rss" type="application/rss+xml" href="/rss/{{ device }}/{{ branch }}" onclick="return gaOutLink(this, 'RSS Feed', this.href);"><img alt="rss feed" src="/img/rss.gif" title="Changelog for {{ manufacturer|capfirst }} {{ device|capfirst }} builds ({{ branch }}) as RSS feed"></a>
+			<div id="gplus"><div class="g-plusone" data-size="small"></div></div>
+
+			<script type="text/javascript">
+				(function() {
+					var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+					po.src = 'https://apis.google.com/js/plusone.js';
+					var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+				})();
+			</script>
 		</div>
 	</body>
 </html>
