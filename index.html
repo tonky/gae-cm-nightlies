@@ -16,6 +16,7 @@
 			var manufacturer = "{{ manufacturer|capfirst }}";
 			var device = "{{ device }}";
 			var dev_title = "{{ dev_title }}";
+			var cl_server = "{{ changelog_server }}";
 			var custom_rom = "{{ custom_rom }}";
 			var build_url = "{{ build_url }}";
 			var gerrit_url = "{{ gerrit_url }}";
@@ -64,24 +65,30 @@
 		</div>
 
 		<div id="select_options">
-			<form action="">
-				<fieldset>
-					<label for="current_device">Device:</label>
-					<span id="current_device">{{ device|capfirst }}{% if dev_title %} - {{ dev_title }}{% endif %}</span>
-				</fieldset><span class="sep"></span>{% if branches|length > 1 %}<fieldset>
-					<label>Branch:</label>{% for branch in branches %}
-					<input type="radio" id="branch_{{ branch }}" class="select_branch" name="branch" value="{{ branch }}"> {{ branch }}</input>{% endfor %}
-				</fieldset><span class="sep"></span>{% endif %}<fieldset>
-					<label>Hide type:</label>
-					{% for type in types %}
-					<input type="checkbox" id="hide_type_{{ type|lower }}"   > {{ type }}</input>{% endfor %}
-				</fieldset><span class="sep"></span><fieldset>
-					<label for="hide_them">Hide translations:</label>
-					<input type="checkbox" id="hide_them" />
-				</fieldset>
-			</form>
+			<div id="options_changes">
+				<form action="">
+					<fieldset>
+						<label for="current_device">Device:</label>
+						<span id="current_device">{{ device|capfirst }}{% if dev_title %} - {{ dev_title }}{% endif %}</span>
+					</fieldset><span class="sep"></span>{% if branches|length > 1 %}<fieldset>
+						<label>Branch:</label>{% for branch in branches %}
+						<input type="radio" id="branch_{{ branch }}" class="select_branch" name="branch" value="{{ branch }}"> {{ branch }}</input>{% endfor %}
+					</fieldset><span class="sep"></span>{% endif %}<fieldset>
+						<label>Hide type:</label>
+						{% for type in types %}
+						<input type="checkbox" id="hide_type_{{ type|lower }}"> {{ type }}</input>{% endfor %}
+					</fieldset><span class="sep"></span><fieldset>
+						<label for="hide_them">Hide translations:</label>
+						<input type="checkbox" id="hide_them" />
+					</fieldset>
+				</form>
+			</div>
+			<div id="options_rss_gplus">
+				<div id="gplus"><div class="g-plusone" data-size="small"></div></div>
+				<a id="rss_ref_top" class="rss" type="application/rss+xml" href="/rss/{{ device }}/{{ branch }}" onclick="return gaOutLink(this, 'RSS Feed', this.href);"><img alt="rss feed" src="/img/rss.gif" title="Changelog for {{ manufacturer|capfirst }} {{ device|capfirst }} builds ({{ branch }}) as RSS feed"></a>
+			</div>
 		</div>
-
+		
 		<hr class="separator" />
 
 		<div id="info_text" class="info_text"></div>
@@ -93,11 +100,8 @@
 
 		<div id="footer">
 			<hr class="separator" />
-			
-			&copy; <a href='mailto:gtonky@gmail.com'>Igor Tonkopryadchenko aka TonKy</a> aka xda:igor.tonky (<a href="http://cm-nightlies.appspot.com/?device={{ device }}">cm9 nightlies</a>).<br />
-			Support for <a href="http://aokp-log.appspot.com/{{ device }}/{{ branch }}">AOKP</a> builds by <a href="http://www.awalon.de/">awalon</a>. Fork on <a href="https://github.com/awalon/gae-cm-nightlies">github</a>. Feedback is welcome.
+			Support for <a href="http://aokp-log.appspot.com/{{ device }}/{{ branch }}">AOKP</a> builds by <a href="http://www.awalon.de/">awalon</a>. Fork of <a href="https://github.com/tonky/gae-cm-nightlies">gae-cm-nightlies (&copy; by tonky)</a> on <a href="https://github.com/awalon/gae-cm-nightlies">github</a>. Feedback is welcome.
 			<a id="rss_ref" class="rss" type="application/rss+xml" href="/rss/{{ device }}/{{ branch }}" onclick="return gaOutLink(this, 'RSS Feed', this.href);"><img alt="rss feed" src="/img/rss.gif" title="Changelog for {{ manufacturer|capfirst }} {{ device|capfirst }} builds ({{ branch }}) as RSS feed"></a>
-			<div id="gplus"><div class="g-plusone" data-size="small"></div></div>
 
 			<script type="text/javascript">
 				(function() {

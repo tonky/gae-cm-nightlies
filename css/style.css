@@ -1,19 +1,26 @@
 body { font-family: arial; background-color: #101010; font-size: 18px; color: #E55003; padding: 15px; margin: 0 5px 5px 5px; }
-.dev_title { color: #A58E4B; }
-.manufacturer { float: left; padding: 2px 5px 4px 4px; margin-top: 4x;}
-.manufacturer:hover { cursor: pointer; }
-#nav_unknown {padding-left: 10px;}
+
 #device_links ul {background-color: #101010; position: absolute; top: 45px; padding: 10px; border: 2px solid #A58E4B;}
+li { padding: 2px 0; }
+.manufacturer { float: left; padding: 2px 5px 4px 4px;}
+.manufacturer:hover { cursor: pointer; }
+.dev_title { color: #A58E4B; }
+#nav_unknown {padding-left: 10px;}
 .nav_active {color: #101010; background-color: #A58E4B;}
 .nav_active a:hover {text-decoration: none; background-color: #A58E4B; color: #E55003;}
-li { padding: 2px 0; }
 
 .separator { clear: both; color: #FF5500; border: 1px solid; margin: 5px 0px 0px 0px; }
 
-#select_options { float: right; color: #A58E4B; margin: 4px 0px 6px 4px; width: auto;}
+#select_options { float: right; color: #A58E4B; margin: 2px 0px 10px 4px; width: auto;}
 #select_options fieldset { display: inline; }
 #select_options input { margin-right: 0px; }
-#select_options .sep { display: inline-block; vertical-align: bottom; color: #FF5500; height: 16px; border: solid #FF5500 1px; margin: 0px 5px;};
+#select_options .sep { display: inline-block; vertical-align: bottom; color: #FF5500; height: 16px; border: solid #FF5500 1px; margin: 0px 5px;}
+#options_changes   { float: left; display: inline; }
+#options_rss_gplus { float: right; display: inline; padding-left: 15px; }
+#options_rss_gplus div { display: inline; }
+
+#rss_ref_top, #gplus, #gplus div {vertical-align: bottom; display: inline; height: 16px; padding-left: 4px}
+#rss_ref img {vertical-align: bottom; display: inline-block; height: 16px; padding-left: 8px}
 
 .lastUpdt { display: inline-block; width: 150px; }
 .commitDesc { display: inline-block; }
@@ -40,7 +47,6 @@ h4 { font-size: 1.2em; text-align: center; padding: 35px 0px 6px 0px; margin-bot
 .error { font-size: 1.2em; color: #f00; padding: 10px; }
 
 #footer { float: left; line-height: 16px; width: 100%; margin: 6px 0 12px 0; text-align: center; font-size: 0.8em; color: #A45209; }
-#footer a img, #gplus {vertical-align: bottom; display: inline-block; height: 16px; padding-left: 8px}
 
 #footer a:link {text-decoration: none; color: #A58E4B; }
 #footer a:visited {text-decoration: none; color: #A58E4B; }

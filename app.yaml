@@ -1,5 +1,5 @@
-application: cm-kang
-version: 14
+application: aokp-log
+version: 3
 runtime: python
 api_version: 1
 
@@ -7,6 +7,10 @@ builtins:
 - datastore_admin: on
 
 handlers:
+
+- url: /_ah/login_required
+  script: do_openid_login.py
+
 - url: /img
   static_dir: img
 
@@ -14,6 +18,7 @@ handlers:
   static_dir: css
 
 - url: /js
+  mime_type: application/x-javascript
   static_dir: js
 
 - url: /rss

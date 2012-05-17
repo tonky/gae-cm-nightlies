@@ -1,9 +1,0 @@
-frameworks_base
-packages_apps_Mms
-packages_apps_Phone
-packages_apps_ROMControl
-packages_apps_Settings
-platform_development
-platform_manifest
-system_bluetooth
-vendor_aokp

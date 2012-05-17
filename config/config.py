@@ -4,22 +4,29 @@ use_library('django', '1.2')
 from google.appengine.ext import db
 
 class Project(db.Model):
-    branch = db.StringProperty()
+    branch  = db.StringProperty()
     project = db.StringProperty()
-    type = db.StringProperty()
+    type    = db.StringProperty()
 
 class Change(db.Model):
-    id = db.IntegerProperty()
-    project = db.StringProperty()
-    subject = db.StringProperty()
+    id           = db.IntegerProperty()
+    remote       = db.StringProperty()
+    project      = db.StringProperty()
+    subject      = db.StringProperty()
     last_updated = db.StringProperty()
-    branch = db.StringProperty()
-    
+    branch       = db.StringProperty()
+
+class Build(db.Model):
+    user_id  = db.StringProperty()
+    url      = db.LinkProperty()
+    branch   = db.StringProperty()
+
 class User(db.Model):
-    id    = db.IntegerProperty()
-    email = db.StringProperty()
-    url   = db.StringProperty()
-    role  = db.IntegerProperty()
+    user_id  = db.StringProperty()
+    nickname = db.StringProperty()
+    email    = db.EmailProperty()
+    url      = db.LinkProperty()
+    role     = db.IntegerProperty()
 
 
 def qs_branch(rh, branch="gingerbread"):
@@ -43,16 +50,20 @@ def qs_kang_id(rh, kangId=""):
     return kangId
 
 # max query size
-query_max = 450
+query_max = 290
 
 # custom_rom = [aokp|cm]
 custom_rom = 'aokp'
 ga_tracking_id = ''
 keywords = ''
+gerrit_aosp_url = 'https://android-review.googlesource.com/'
 if custom_rom == 'aokp':
     keywords = "Android Open Kang Project"
     gerrit_time_offset = 2
     ga_tracking_id = ''
+    git_url = 'https://github.com/AOKP/platform_manifest/blob/ics/default.xml'
+    git_name = 'gh'
+    changelog_server = ''
     build_url = 'http://goo.im/devs/aokp/'
     build_dev_list_regex = r'^.*?<table.*?id.*?browse-tbl.*?>.*?File Name(.*?)</table>.*$'
     build_dev_regex = r'<a.*?href=["\'].*?/devs/aokp/([^"\']+)["\'].*?>'
@@ -65,6 +76,9 @@ elif custom_rom == 'cm':
     keywords = "Cyanogen, CyanogenMod, cyanogen mod"
     gerrit_time_offset = -2
     ga_tracking_id = ''
+    git_url = 'https://github.com/CyanogenMod/android/blob/ics/default.xml'
+    git_name = 'github'
+    changelog_server = ''
     build_url = 'http://download.cyanogenmod.com/?device='
     build_dev_list_regex = r'^.*?<ul.*?class.*?nav.*?>(.*)</ul>.*$'
     build_dev_regex = r'<li.*?id=["\']device_([^"\']+)["\'].*?>'
@@ -79,9 +93,9 @@ use_kang_extension = True
 
 allow_db_clear = False
 
-cache_device_timeout = 10800 # 3 hours
-cache_build_timeout = 900 # 15 minutes
-cache_rss_merge_timeout = 3600 # 1 hour
+cache_device_timeout    = 43200 # 12 hours
+cache_build_timeout     =   900 # 15 minutes
+cache_rss_merge_timeout =     0 # disabled # 1 hour (3600)
 
 branch_device = {
     "gingerbread": ["ace", "galaxys2att"],
@@ -121,6 +135,7 @@ device_title = {
     "epicmtd": "Epic 4G (SPH-D700)",
     "es209ra": "Xperia X10",
     "espresso": "myTouch 3G Slide",
+    "espressowifi": "myTouch 3G Slide - WiFi",
     "fascinatemtd": "Fascinate - Verizon",
     "galaxys2": "Galaxy S II",
     "galaxys2att": "Galaxy S II - AT&T",
@@ -144,6 +159,7 @@ device_title = {
     "mimmi": "Xperia X10 Mini Pro",
     "motus": "Backflip",
     "morrison": "Cliq",
+    "n7000": "Galaxy Note GT",
     "olympus": "Atrix 4G",
     "otter": "Kindle Fire",
     "p1": "Galaxy Tab 7\"",
@@ -152,7 +168,7 @@ device_title = {
     "p4": "Galaxy Tab 10.1\" - 3G (P7500)",
     "p4tmo": "Galaxy Tab 10.1\" - T-Mobile",
     "p4vzw": "Galaxy Tab 10.1\" - Verizon",
-    "p4wifi": "Galaxy Tab 10.1\" - Wi-Fi",
+    "p4wifi": "Galaxy Tab 10.1\" - WiFi",
     "p5": "Galaxy Tab 8.9\"",
     "p5wifi": "Galaxy Tab 8.9\" WiFi",
     "p500": "Optimus One",
@@ -238,6 +254,7 @@ device_specific = {
     "epicmtd": ["android_device_samsung_epicmtd", "android_kernel_samsung_victory"],
     "es209ra": ["android_device_semc_es209ra", "android_device_semc_msm7x27-common"],
     "espresso": ["android_device_htc_espresso", "htc-kernel-msm7227"],
+    "espressowifi": ["android_device_htc_espressowifi", "htc-kernel-msm7227"],
     "fascinatemtd": ["android_device_samsung_fascinatemtd", "android_device_samsung_aries-common",
                      "android_kernel_samsung_aries"],
     "galaxys2": ["android_device_samsung_galaxys2", "android_device_samsung_c1-common"],
@@ -268,6 +285,7 @@ device_specific = {
     "mimmi": ["android_device_semc_mimmi", "android_device_semc_msm7x27-common"],
     "morrison": ["android_device_motorola_morrison"],
     "motus": ["android_device_motorola_motus"],
+    "n7000": ["android_device_samsung_n7000"],
     "one": ["android_device_geeksphone_one"],
     "olympus": ["android_device_motorola_olympus"],
     "otter": ["android_device_amazon_otter"],

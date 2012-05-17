@@ -1,5 +1,6 @@
-from config.config import (ga_tracking_id, custom_rom, build_url, gerrit_url, gerrit_time_offset,
-    use_kang_extension, build_dev_list_regex, build_dev_regex, build_list_regex, build_regex,
+from config.config import (ga_tracking_id, custom_rom, use_kang_extension,
+    gerrit_url, git_name, gerrit_time_offset, changelog_server,
+    build_url, build_dev_list_regex, build_dev_regex, build_list_regex, build_regex,
     allow_db_clear, branch_device, device_title, device_specific, qs_branch, qs_device,
     qs_kang_name, qs_kang_id, keywords, branches, types,
     query_max, cache_device_timeout, cache_build_timeout, cache_rss_merge_timeout,
@@ -9,6 +10,7 @@ import logging
 import os
 import time
 import re
+import sys
 
 from datetime import datetime, timedelta
 from operator import itemgetter
@@ -20,10 +22,39 @@ from google.appengine.api import memcache
 from google.appengine.ext import db
 from google.appengine.ext import webapp
 from google.appengine.api import users
-from google.appengine.api import oauth
 from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.runtime import DeadlineExceededError
+from google.appengine.api.urlfetch_errors import DownloadError
+
+
+def memcache_set(key, value, timeout=0, namespace=None):
+    if namespace:
+        key_ns_list = key+':nsl'
+        ns_list = memcache.get(key_ns_list)
+        if ns_list:
+            ns_list.append(namespace)
+        else:
+            ns_list = [namespace]
+        memcache.set(key_ns_list, ns_list)
+    memcache.set(key, value, timeout, namespace=namespace)
+
+
+def memcache_delete_multi(keys, timeout=0):
+    for key in keys:
+        key_ns_list = key+':nsl'
+        ns_list = memcache.get(key_ns_list)
+        
+        if ns_list:
+            for ns in ns_list:
+                logging.debug("###> cache: deleting key '%s' in namespace '%s'" % (key, ns))
+                memcache.delete(key, timeout, namespace=ns)
+                
+            logging.debug("###> cache: deleting namespace list '%s'" % key_ns_list)
+            memcache.delete(key_ns_list, timeout)
+            
+        logging.debug("###> cache: deleting key '%s'" % key)
+        memcache.delete(key, timeout)
 
 
 def get_tzd():
@@ -83,7 +114,7 @@ def get_tzd():
 
 def parse_timestamp(timestamp):
 	if not timestamp: return
-	m = re.search("^(\d{4}-\d{1,2}-\d{1,2} \d{1,2}:\d{1,2}:\d{1,2})(?:\.000000000)?\s*([A-Z]+)?$", timestamp)
+	m = re.search("^(\d{4}-\d{1,2}-\d{1,2} \d{1,2}:\d{1,2}:\d{1,2})(?:\.\d+)?\s*([A-Z]+)?$", timestamp)
 	if m:
 		tzd = get_tzd()
 		dt = datetime.strptime(m.group(1), "%Y-%m-%d %H:%M:%S")
@@ -135,65 +166,103 @@ def project_type(project):
         return 'common'
 
 
-def project(branch, type, force=False):
-    cache_ns = type+"-"+branch
-    p_list = memcache.get('project', cache_ns)
+def merge_list(a, b):
+    a.append('')
+    a[-1:] = b
+    return a
+
+
+class Projects():
+    def _get_mem(self, branch, type):
+        cache_ns = type+"-"+branch
+        return memcache.get('project', cache_ns)
     
-    if not force and p_list is not None:
+    def _set_mem(self, p_list, branch, type):
+        cache_ns = type+"-"+branch
+        memcache_set('project', p_list, namespace=cache_ns)
         return p_list
     
-    memcache.delete('project-list')
-    if type == '--all--':
-        p_list = Project.gql("WHERE branch = :1 ORDER BY type, project", branch)
-    else:
-        p_list = Project.gql("WHERE branch = :1 AND type = :2 ORDER BY project", branch, type)
+    def append(self, new):
+        p_list = self._get_mem(new.branch, new.type)
+        if p_list is None:
+            logging.debug("###> MemCache: No projects")
+            return
+        
+        p_list = merge_list ([new], p_list)
+        return self._set_mem(p_list, new.branch, new.type)
     
-    memcache.set('project', p_list, namespace=cache_ns)
-    return p_list
-
-
-def project_list(branch, type):
-    cache_ns = type+"-"+branch
-    p_list = memcache.get('project-list', cache_ns)
-    
-    if p_list is not None:
+    def list(self, branch, type):
+        p_list = []
+        for p in self.get(branch, type):
+            p_list.append(p.project)
         return p_list
-
-    p_rows = project(branch, type)
-    p_list = []
-    for p in p_rows:
-        p_list.append(p.project)
     
-    memcache.set('project-list', p_list, namespace=cache_ns)
-    return p_list
+    def get(self, branch, type, force=False):
+        p_list = self._get_mem(branch, type)
+        if not force and p_list is not None:
+            logging.debug("---> DS: Projects cache hit")
+            return p_list
+        
+        logging.debug("###> DS: Read project: branch '%s', type '%s'" % (branch, type))
+        if type == '--all--':
+            p_list = Project.gql("WHERE branch = :1 ORDER BY type, project", branch)
+        else:
+            p_list = Project.gql("WHERE branch = :1 AND type = :2 ORDER BY project", branch, type)
+        
+        return self._set_mem(p_list, branch, type)
 
 
-def last_changes(branch):
-    if branch == 'None' or branch == '' or branch is None:
-        branch = 'gingerbread'
-    last_changes = memcache.get('last_changes', branch)
-
-    if last_changes is not None:
-        # logging.debug("-----------> last changes cache hit")
-        return last_changes
+class LastChanges():
+    def _get_mem(self, branch):
+        return memcache.get('last_changes', branch)
     
-    if branch == '--all--':
-        last_changes = Change.gql("ORDER BY last_updated DESC")
-    else:
-        q = Change.gql("WHERE branch = :branch ORDER BY last_updated DESC", branch=branch)
-        last_changes = q.fetch(query_max+100)
+    def _set_mem(self, lc_list, branch):
+        memcache_set('last_changes', lc_list, namespace=branch)
+        return lc_list
     
-    memcache.set('last_changes', last_changes, namespace=branch)
-    return last_changes
+    def append(self, new):
+        lc_list = self._get_mem(new.branch)
+        if lc_list is None:
+            logging.debug("###> MemCache: No last changes")
+            return
+        
+        lc_list = merge_list([new], lc_list)
+        return self._set_mem(lc_list, new.branch)
+    
+    def sort(self, branch):
+        lc_list = self._get_mem(branch)
+        if lc_list is None: return
+        
+        lc_list = sorted(lc_list, key=lambda e: e.last_updated, reverse=True)
+        return self._set_mem(lc_list, branch)
+    
+    def get(self, branch):
+        if branch == 'None' or branch == '' or branch is None:
+            branch = 'gingerbread'
+        lc_list = self._get_mem(branch)
+    
+        if lc_list is not None:
+            logging.debug("---> DS: Last changes cache hit")
+            return lc_list
+            
+        logging.debug("###> DS: read last changes")
+        query_limit = query_max + 20
+        if branch == '--all--':
+            lc_list = Change.gql("ORDER BY last_updated DESC LIMIT %s" % query_limit)
+        else:
+            lc_list = Change.gql("WHERE branch IN (:branch, 'master') ORDER BY last_updated DESC LIMIT %s" % query_limit, branch=branch)
+        
+        return self._set_mem(lc_list, branch)
 
 
 def device_projects():
     projects = memcache.get('device-projects')
 
     if projects is not None:
-        # logging.debug("-----------> device project cache hit")
+        logging.debug("---> DS: Device project cache hit")
         return projects
     
+    logging.debug("###> DS: read device projects")
     all_projects = Project.gql("WHERE type = 'device'")
     
     projects = []
@@ -211,6 +280,7 @@ class ShowDb(webapp.RequestHandler):
         device = qs_device(self)
         self.response.headers['Content-Type'] = 'text/html; charset=UTF-8'
         
+        logging.debug("######> DS: read for DB dump")
         if self.request.get('filter') and self.request.get('filter') == "1":
              q = Change.gql("WHERE branch = :branch ORDER BY last_updated DESC", branch=branch)
         else:
@@ -234,8 +304,16 @@ class ShowDb(webapp.RequestHandler):
 class ShowProjects(webapp.RequestHandler):
     def get(self):
         branch = qs_branch(self)
+        type = '--all--'
         
-        p_list = project(branch, '--all--', True)
+        qs_type = self.request.get('type')
+        if qs_type:
+            type = qs_type
+        
+        if self.request.get('flush'):
+            memcache_delete_multi(['project']);
+        
+        p_list = Projects().get(branch, type)
         self.response.headers['Content-Type'] = 'text/plain; charset=UTF-8'
         for p in p_list:
             self.response.out.write("%s; %s; %s\n" %(p.branch, p.type, p.project))
@@ -247,7 +325,7 @@ class ShowCommonProjects(webapp.RequestHandler):
     def get(self):
         branch = qs_branch(self)
         
-        p_list = project(branch, 'common', True)
+        p_list = Projects().get(branch, 'common', True)
         self.response.headers['Content-Type'] = 'text/plain; charset=UTF-8'
         for p in p_list:
             self.response.out.write("%s; %s; %s\n" %(p.branch, p.type, p.project))
@@ -257,6 +335,7 @@ class ShowCommonProjects(webapp.RequestHandler):
 
 class LoadProjects(webapp.RequestHandler):
     def get(self):
+        logging.debug("#######> DS: Maint: LoadProjects")
         ch = Change.all()
         
         seen = {}
@@ -277,7 +356,8 @@ class LoadProjects(webapp.RequestHandler):
                     )
             project.put()
         
-        memcache.flush_all()
+        #memcache.flush_all()
+        memcache_delete_multi(['filtered', 'merge-builds', 'device-projects'])
         return
 
 
@@ -285,14 +365,13 @@ class RmDuplicate(webapp.RequestHandler):
     def get(self):
         device = qs_device(self)
         
-        self.response.headers['Content-Type'] = 'text/html; charset=UTF-8'
-        memcache.flush_all()
-        
+        logging.debug("#######> DS: Maint: RmDuplicate")
         ch = Change.gql("ORDER BY id")
         
         seen = []
+        self.response.headers['Content-Type'] = 'text/html; charset=UTF-8'
         self.response.out.write("<table>")
-        self.response.out.write("<thead><tr><td>action</td><td>branch</td><td>id</td><td>subject</td><td>project</td><td>last_updated</td></tr></thead><tbody>")
+        self.response.out.write("<thead><tr><td>action</td><td>remote</td><td>branch</td><td>id</td><td>subject</td><td>project</td><td>last_updated</td></tr></thead><tbody>")
         timeout = True
         
         while timeout:
@@ -302,6 +381,9 @@ class RmDuplicate(webapp.RequestHandler):
                     if r.id in seen:
                         action = 'remove'
                         r.delete()
+                    
+                    if r.remote is None:
+                        r.remote = git_name
                     
                     if r.branch is None:
                         r.branch = 'gingerbread'
@@ -321,6 +403,7 @@ class RmDuplicate(webapp.RequestHandler):
                     #r.subject = time.strftime('%Y-%m-%d %H:%M')+' - '
                     self.response.out.write("<tr>")
                     self.response.out.write("<td>"+action+"</td>\n")
+                    self.response.out.write("<td>"+r.remote+"</td>\n")
                     self.response.out.write("<td>"+r.branch+"</td>\n")
                     self.response.out.write("<td>"+str(r.id)+"</td>\n")
                     self.response.out.write("<td>"+r.subject+"</td>\n")
@@ -368,7 +451,7 @@ class ChangesAvailable(webapp.RequestHandler):
         kang = qs_kang_name(self)
         branch = qs_branch(self)
         device = qs_device(self)
-        lc = last_changes(branch)
+        lc = LastChanges().get(branch)
         
         self.response.headers['Content-Type'] = 'text/plain; charset=UTF-8'
         status = 200
@@ -394,11 +477,11 @@ class ReviewsCron(webapp.RequestHandler):
         known = memcache.get('known_ids')
 
         if known is not None:
-            # logging.debug("-----------> known ids cache hit")
+            logging.debug("---> DS: Known IDs cache hit")
             return known
 
-        known_ids = [int(c.id) for c in last_changes('--all--')]
-
+        logging.debug("###> DS: read id list")
+        known_ids = [int(c.id) for c in LastChanges().get('--all--')]
         memcache.set('known_ids', known_ids)
 
         return known_ids
@@ -406,8 +489,10 @@ class ReviewsCron(webapp.RequestHandler):
     def _update_changes(self, changes=[], known_ids=[]):
         skipped = 0
         updates = False
-        project_seen = {}
-
+        branches = {}
+        cl_projects = Projects()
+        cl_last_chg = LastChanges()
+        
         for c in changes:
             if c['id']['id'] in known_ids:
                 skipped += 1
@@ -422,20 +507,31 @@ class ReviewsCron(webapp.RequestHandler):
                     )
             change.put()
             
+            # append change to memcache (last changes)
+            known_ids.append(change.id)
+            memcache.set('known_ids', known_ids)
+            cl_last_chg.append(change)
+            branches[change.branch] = 1
+            
             # append new project
-            p_list = project_list(change.branch, '--all--')
-            if not change.project in p_list and not change.project in project_seen:
+            p_type = project_type(change.project)
+            if not change.project in cl_projects.list(change.branch, p_type):
                 project = Project(
-                                branch=change.branch,
-                                type=project_type(change.project),
-                                project=change.project
+                                branch  = change.branch,
+                                type    = p_type,
+                                project = change.project
                             )
                 project.put()
-                project_seen[change.project] = 1
+                cl_projects.append(project)
         
         if updates:
+            for b in branches:
+                cl_last_chg.sort(b)
+            
+            logging.debug("###> MemCache: Flush after new changes")
             # flush all memcache on new changes for people to see them immediately
-            memcache.delete_multi(('known_ids', 'last_changes', 'filtered', 'merge-builds', 'project', 'project-list'))
+            memcache_delete_multi(['filtered', 'merge-builds', 'device-projects'])
+            #memcache_delete_multi(['known_ids', 'last_changes', 'filtered', 'merge-builds', 'project', 'project-list'])
             #memcache.flush_all()
 
         self.response.headers['Content-Type'] = 'text/plain; charset=UTF-8'
@@ -454,18 +550,23 @@ class ReviewsCron(webapp.RequestHandler):
             if amount > query_max: amount = query_max
 
         change_proxy = proxy.ServerProxy(gerrit_url+'gerrit/rpc/ChangeListService')
-        try:
-            changes = change_proxy.allQueryNext("status:merged","z",amount)['changes']
-            #changes = change_proxy.allQueryNext("status:merged branch:ics","z",amount)['changes']
-            #changes = change_proxy.allQueryNext("status:merged branch:gingerbread","z",amount)['changes']
-            #self.response.out.write(json.dumps(changes))
-        except:
-            self.response.headers['Content-Type'] = 'text/plain; charset=UTF-8'
-            self.response.out.write("ERROR: cannot fetch changes, error occurred\n")
-            return
+        retry_fetch = 10
+        while retry_fetch > 0:
+            try:
+                changes = change_proxy.allQueryNext("status:merged","z",amount)['changes']
+                #changes = change_proxy.allQueryNext("status:merged branch:ics","z",amount)['changes']
+                #self.response.out.write(json.dumps(changes))
+                retry_fetch = 0
+            except DownloadError:
+                retry_fetch -= 1
+                
+            except:
+                self.response.headers['Content-Type'] = 'text/plain; charset=UTF-8'
+                self.response.out.write("ERROR: cannot fetch changes, error occurred\n")
+                self.response.out.write(sys.exc_info())
+                return
 
         known_ids = self._known_ids()
-
         received_ids = [c['id']['id'] for c in changes]
 
         if is_subset(received_ids, known_ids):
@@ -499,7 +600,7 @@ class NewKang(webapp.RequestHandler):
                 last_updated = time.strftime('%Y-%m-%d %H:%M:%S.000000000', time.gmtime(time.time()))
                 )
         change.put()
-        memcache.delete_multi(('last_changes', 'filtered'))
+        memcache_delete_multi(['last_changes', 'filtered'])
         self.response.headers['Content-Type'] = 'text/plain; charset=UTF-8'
         self.response.out.write("KEY: '"+str(change.key().id())+"'\n")
         self.response.out.write("Added KANG: '"+kang+"'\n")
@@ -522,7 +623,7 @@ class RemoveKang(webapp.RequestHandler):
             self.response.out.write('<tr><td><a href="/remove_kang-off/?branch='+k.branch+'&kang='+kang+'&kangId='+str(k.id)+'">'+str(k.id)+'</a></td><td>Checking KANG</td><td>'+k.branch+'</td><td>'+k.subject+'</td><td>'+k.project+'</td><td>'+str(k.last_updated)+'</td></tr>\n')
             if (k.subject == kang) or (str(k.id) == kangId):
                 db.delete(k)
-                memcache.delete_multi(('last_changes', 'filtered'))
+                memcache_delete_multi(['last_changes', 'filtered'])
                 self.response.out.write('<tr><td>'+str(k.id)+'</td><td>Removed KANG</td><td>'+k.branch+'</td><td>'+k.subject+'</td><td>'+k.project+'</td><td>'+str(k.last_updated)+'</td></tr>\n')
                 cmd_done = 1;
                 break
@@ -553,7 +654,7 @@ class RenameKang(webapp.RequestHandler):
                 old_name = k.subject
                 k.subject = kang+"#dev:"+device
                 k.put()
-                memcache.delete_multi(('last_changes', 'filtered'))
+                memcache_delete_multi(['last_changes', 'filtered'])
                 self.response.out.write('<tr><td><a href="">'+str(k.id)+'</a></td><td>Renamed KANG (old: '+old_name+'; new: '+kang+')</td><td>'+k.branch+'</td><td>'+k.subject+'</td><td>'+k.project+'</td><td>'+str(k.last_updated)+'</td></tr>\n')
                 cmd_done = 1
                 break
@@ -580,38 +681,64 @@ class ClearDB(webapp.RequestHandler):
 class FlushCache(webapp.RequestHandler):
     def get(self):
         self.response.headers['Content-Type'] = 'text/plain; charset=UTF-8'
+        logging.debug("######> MemCache: Flushed by user request")
         memcache.flush_all()
         self.response.out.write("Cache flushed...\n")
 
 
+class FlushTest(webapp.RequestHandler):
+    def get(self):
+        branch = qs_branch(self)
+        delete = qa = self.request.get('delete')
+        cache_ns = "flush-test-"+branch
+        
+        self.response.headers['Content-Type'] = 'text/plain; charset=UTF-8'
+        if delete:
+            self.response.out.write("Flush cached values (start: '%s')\n" % cache_ns)
+            memcache_delete_multi(['flush-test-ics', 'flush-test-gingerbread', cache_ns])
+        
+        f_test = memcache.get(cache_ns, branch)
+        
+        if f_test is not None:
+            self.response.out.write("Using cached list '%s'...\n" % cache_ns)
+            for t in f_test:
+                self.response.out.write("Cached: %s\n" % t)
+        else:
+            self.response.out.write("Cache '%s' is empty...\n" % cache_ns)
+            f_test = ['one', 'two']
+            
+        memcache_set(cache_ns, f_test, namespace=branch)
+
+
 class Admin(webapp.RequestHandler):
     def get(self):
-        user = None
         try:
             # Get the db.User that represents the user on whose behalf the
             # consumer is making this request.
-            user = oauth.get_current_user()
-        except oauth.OAuthRequestError, e:
+            user = users.get_current_user()
+        except e:
             # The request was not a valid OAuth request.
             # ...
             #self.response.headers['Content-Type'] = 'text/plain; charset=UTF-8'
             #self.response.out.write('Auth error: The request was not a valid OAuth request.')
             user = None
         
+        is_admin = False
         if user:
             greeting = ("Welcome, %s! (<a href=\"%s\">sign out</a>)" %
                         (user.nickname(), users.create_logout_url("/")))
+            is_admin = users.is_current_user_admin()
         else:
             greeting = ("<a href=\"%s\">Sign in or register</a>" %
-                        users.create_login_url("/"))
+                        users.create_login_url("/admin"))
         
         branch = qs_branch(self)
         device = qs_device(self)
 
         path = os.path.join(os.path.dirname(__file__), 'admin.html')
         self.response.out.write(template.render(path, {"device": device, "branch": branch,
-                                "greeting": greeting, "user": user, "custom_rom": custom_rom,
-                                "gerrit_url": gerrit_url}))
+                                "greeting": greeting, "user": user, "is_admin": is_admin,
+                                "custom_rom": custom_rom, "gerrit_url": gerrit_url}))
 
 
 class Test(webapp.RequestHandler):
@@ -626,8 +753,10 @@ class RssFeed(webapp.RequestHandler):
         builds = memcache.get('merge-builds', cache_ns)
 
         if builds is not None:
+            logging.debug("------> RSS Feed: Merge")
             return builds
         
+        logging.debug("######> RSS Feed: Merge")
         build_branch  = CustomRomBuilds().getBuilds(device, False)
         if branch not in build_branch: return
         
@@ -660,7 +789,7 @@ class RssFeed(webapp.RequestHandler):
                 if len(c_build) < 5: c_build.append([])
                 c_build[4].append((c['subject']+" ("+c['project']+")"))
         
-        memcache.set('merge-builds', builds, cache_rss_merge_timeout, namespace=cache_ns)
+        memcache_set('merge-builds', builds, cache_rss_merge_timeout, namespace=cache_ns)
         return builds
     
     def get(self, device=None, branch=None):
@@ -763,6 +892,7 @@ class CustomRomDevices(webapp.RequestHandler):
                     
                     cr_devices['dev'][c_dev] = {
                         "name":         c_dev,
+                        "title":        '',
                         "projects":     ["android_device_"+c_manufacturer+"_"+c_dev, "device_"+c_manufacturer+"_"+c_dev],
                         "manufacturer": c_manufacturer,
                         "alias":        '',
@@ -861,7 +991,7 @@ class CustomRomBuilds(webapp.RequestHandler):
             cache_ns = device+"-"+branch
             memcache.delete('merge-builds', namespace=cache_ns)
         
-        memcache.set('cr-builds', nightlies_branch, cache_build_timeout, namespace=device)
+        memcache_set('cr-builds', nightlies_branch, cache_build_timeout, namespace=device)
         return nightlies_branch
         
     def get(self):
@@ -898,7 +1028,7 @@ class MainPage(webapp.RequestHandler):
         self.response.out.write(template.render(path,
             {"ga_tracking_id": ga_tracking_id, "custom_rom": custom_rom, "build_url": build_url, "gerrit_url": gerrit_url, "types": types,
              "url": self.request.host, "branch": branch, "device": device, "dev_title": dev_title, "manufacturer": manufacturer, "keywords": keywords,
-             'devices': device_config, 'branches': branches}))
+             'devices': device_config, 'branches': branches, "changelog_server": changelog_server}))
 
 
 class Ajax(webapp.RequestHandler):
@@ -907,13 +1037,14 @@ class Ajax(webapp.RequestHandler):
         filtered = memcache.get('filtered', filter_ns)
         
         if filtered is not None:
-            # logging.debug("-----------> filtered cache hit")
+            logging.debug("------> DS: Filtered cache hit")
             return filtered
 
+        logging.debug("######> DS: Build list of filtered changes for '%s'" % filter_ns)
         filtered = []
-        common = project_list(branch, 'common')
+        common = Projects().list(branch, 'common')
 
-        lc = last_changes(branch)
+        lc = LastChanges().get(branch)
         for c in lc:
             if (
                     c.project in common
@@ -927,15 +1058,14 @@ class Ajax(webapp.RequestHandler):
                 filtered.append({"id": c.id, "branch": c.branch, "project": c.project,
                     "subject": c.subject, "last_updated_offset": c_time_offset, 
                     "last_updated": c.last_updated, "last_updated_utc": c_time})
-
-        memcache.set('filtered', filtered, namespace=filter_ns)
-
+        
+        memcache_set('filtered', filtered, namespace=filter_ns)
         return filtered
-
+    
     def get(self):
         branch = qs_branch(self)
         device = qs_device(self)
-
+        
         self.response.headers['Content-Type'] = 'application/json'
         self.response.out.write(json.dumps(self.filter(device, branch), default=json_datetime_handler))
 
@@ -949,6 +1079,7 @@ application = webapp.WSGIApplication([('/', MainPage),
                                          ('/load_project/', LoadProjects),
                                          ('/rm_duplicate/', RmDuplicate),
                                          ('/flush/', FlushCache),
+                                         ('/flush-test/', FlushTest),
                                          ('/show_db/', ShowDb),
                                          ('/show_projects/', ShowProjects),
                                          ('/show_common_projects/', ShowCommonProjects),
@@ -956,14 +1087,16 @@ application = webapp.WSGIApplication([('/', MainPage),
                                          ('/changes_available_dev/', ChangesAvailableDevice),
                                          ('/new_kang/', NewKang),
                                          ('/remove_kang/', RemoveKang),
+                                         ('/remove_kang-off/', Admin),
                                          ('/rename_kang/', RenameKang),
+                                         ('/rename_kang-off/', Admin),
                                          ('/admin', Admin),
                                          ('/admin.html', Admin),
                                          ('/test', Test),
                                          ('/rss', RssFeed),
                                          ('/rss.xml', RssFeed),
                                          ('/rss/([^/#\?]+)(?:/([^/#\?]*))?', RssFeed),
-                                         ('/([^/#\?]+)(?:/([^/#\?]*))?', MainPage),
+                                         ('/([^/#\?]+)(?:/([^/#\?]*))?(?:mobiquo/mobiquo.php)?', MainPage),
                                          ],
                                      debug=True)
 

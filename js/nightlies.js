@@ -1,8 +1,12 @@
 var nightlies_branch = [];
 var merged = [];
 var url_nightlies = "/get_builds/";
-var url_changelog = "/changelog/"
+var url_changelog = cl_server+"/changelog/";
 var getJsonCnt = 2;
+
+function isArray(a) {
+	return Object.prototype.toString.apply(a) === '[object Array]';
+}
 
 Date.prototype.addHours = function(h){
 	this.setHours(this.getHours()+h);
@@ -149,14 +153,28 @@ function main() {
 }
 
 function parse_nightlies_json (data) {
-	nightlies_branch = data;
+	if (url_nightlies.indexOf('http://') != 0) {
+		nightlies_branch = data;
+	} else {
+		json_string = data.responseText;
+		json_string = json_string.replace(/\n/g, "");
+		json_string = json_string.replace(/.*<html>.*<body>.*<p>(.*)<\/p>.*<\/html>.*/g, "$1");
+		nightlies_branch = jQuery.parseJSON(json_string);
+	}
 	if (--getJsonCnt == 0) {
 		main();
 	}
 }
 
 function parse_changelog(data) {
-	merged = data;
+	if (url_changelog.indexOf('http://') != 0 || isArray(data)) {
+		merged = data;
+	} else {
+		json_string = data.responseText;
+		json_string = json_string.replace(/\n/g, "");
+		json_string = json_string.replace(/.*<html>.*<body>.*<p>(.*)<\/p>.*<\/html>.*/g, "$1");
+		merged = jQuery.parseJSON(json_string);
+	}
 	if (--getJsonCnt == 0) {
 		main();
 	}
@@ -207,29 +225,42 @@ $(document).ready(function () {
 	if (qs_branch) {
 		branch = qs_branch;
 		$.cookie(custom_rom+'-nightlies_branch', branch);
+	} else if (branch) {
+		$.cookie(custom_rom+'-nightlies_branch', branch) 
 	} else if ($.cookie(custom_rom+'-nightlies_branch')) {
 		branch = $.cookie(custom_rom+'-nightlies_branch');
 	}
+	$(("#branch_"+branch)).attr('checked', true);
 	
 	if (qs_device) {
 		device = qs_device;
 	}
-	if ($.cookie(custom_rom+'-nightlies')        ) { $("#hide_them").attr("checked", true); }
-	if ($.cookie(custom_rom+'-nightlies-kang')   ) { $("#hide_type_kang").attr("checked", true); }
-	if ($.cookie(custom_rom+'-nightlies-nightly')) { $("#hide_type_nightly").attr("checked", true); }
-	if ($.cookie(custom_rom+'-nightlies-rc')     ) { $("#hide_type_rc").attr("checked", true); }
-	if ($.cookie(custom_rom+'-nightlies-stable') ) { $("#hide_type_stabel").attr("checked", true); }
+	
+	// hide: translations
+	if ($.cookie(custom_rom+'-nightlies')) { $("#hide_them").attr("checked", true); }
+	
+	// hide: build types
+	types.forEach(function(t, i, a) {
+		var type = t.toLowerCase();
+		if ($.cookie(custom_rom+'-nightlies-'+type)) { $("#hide_type_"+type).attr("checked", true); }
+	});
+	
 	
 	load_data(branch);
 	
-	$(".select_branch").click(function() { load_data(this.value); });
-	$(("#branch_"+branch)).attr('checked', true);
 	
-	$("#hide_them"        ).click(function() { trans_visibility(); });
+	// change branch on user request
+	$(".select_branch").click(function() { load_data(this.value); });
+	
+	// hide: translations
+	$("#hide_them").click(function() { trans_visibility(); });
+	
+	// hide: build types
 	types.forEach(function(t, i, a) {
 		var type = t.toLowerCase();
 		$("#hide_type_"+type).click(function() { trans_visibility(type); });
 	});
+	
 	
 	$("#announcement_header").click(function() { $("#announcement_text").toggleClass("hidden") ; });
 	
