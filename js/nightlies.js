@@ -80,14 +80,14 @@ function parse_nightlies(data) {
         return $('#merged_changes').text("Yahoo API is down, please try about five minutes later.");
     }
 
-    nightlies_raw  = data.results[0].match(/update-[\s\S]*?\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/g);
+    nightlies_raw  = data.results[0].match(/cm-[\s\S]*?\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/g);
 
     if (!nightlies_raw) {
         return $('#merged_changes').append("<h4 class='error'>No nightlies for this device or cm site is down.</h1>");
     }
 
     nightlies_raw.forEach(function(e, i, a) {
-        var parsed = e.match(/(update\-cm\-9.*?\.zip)[\s\S]*?(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/);
+        var parsed = e.match(/(cm\-9.*?\.zip)[\s\S]*?(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/);
 
         if (parsed) { nightlies.push([parsed[1], parsed[2]]); }
     });
