@@ -57,6 +57,8 @@ device_specific = {
     "hero": ["android_device_htc_hero"],
     "heroc": ["android_device_htc_heroc"],
     "inc": ["android_device_htc_inc", "cm-kernel", "htc-kernel-incrediblec"],
+    "jordan": ["android_device_motorola_jordan", "android_device_motorola_common",
+				"android_external_bootmenu"],
     "legend": ["android_device_htc_legend", "htc-kernel-msm7227"],
     "liberty": ["android_device_htc_liberty", "htc-kernel-msm7227"],
     "maguro": ["android_device_samsung_maguro", "android_device_samsung_tuna"],
